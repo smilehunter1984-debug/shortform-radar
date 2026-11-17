@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>숏폼레이더</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e10; --panel:#17171a; --panel2:#202024; --line:#2c2c31; --text:#f2f2f3; --sub:#a3a3ab; --muted:#6f6f78;
+  --red:#ff2e3b; --red2:#e1101d; --blue:#38b6ff; --purple:#a07cff; --yellow:#ffbe2e; --green:#2fd38a;
+  --chip:#232327; --shadow:0 8px 30px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{
+  --bg:#f5f5f7; --panel:#ffffff; --panel2:#f2f2f5; --line:#e3e3e8; --text:#17171a; --sub:#55555e; --muted:#8a8a94;
+  --chip:#f0f0f3; --shadow:0 8px 30px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans KR",system-ui,sans-serif;font-size:14px;line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hdr{display:flex;align-items:center;gap:28px;height:60px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:19px;letter-spacing:-.5px}
+.logo i{width:30px;height:30px;border-radius:9px;background:var(--red);display:grid;place-items:center;font-style:normal;color:#fff;font-size:16px}
+.logo b{color:var(--red)}
+nav{display:flex;gap:4px;flex:1;overflow-x:auto}
+nav a{padding:18px 12px;color:var(--sub);font-weight:500;white-space:nowrap;border-bottom:2px solid transparent}
+nav a.on{color:var(--text);font-weight:700;border-color:var(--red)}
+.hbtn{display:flex;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:transparent;color:var(--text);padding:7px 14px;border-radius:8px;font-weight:600;font-size:13px}
+.btn.red{background:var(--red2);border-color:var(--red2);color:#fff}
+.icon{width:36px;height:36px;padding:0;display:grid;place-items:center;font-size:16px}
+.eyebrow{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:13px;font-weight:500;margin-top:40px}
+.eyebrow:before{content:"";width:24px;height:1px;background:var(--sub)}
+h1{font-size:32px;font-weight:900;margin:8px 0 14px;letter-spacing:-1px}
+.desc{color:var(--sub);margin:2px 0}
+.desc b{color:var(--text)}
+.bolt{color:var(--red)}
+.titlerow{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.collected{text-align:right;font-size:12px;color:var(--sub)}
+.collected strong{display:block;color:var(--text);font-size:17px}
+.filters{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:24px 0}
+.chips{display:flex;flex-wrap:wrap;gap:7px;padding:4px 0}
+.chips+.chips{border-top:1px solid var(--line);margin-top:10px;padding-top:14px}
+.chip{border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:500}
+.chip.on{background:var(--red2);border-color:var(--red2);color:#fff;font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.card h3{margin:0;font-size:17px}
+.card .cdesc{color:var(--sub);font-size:13px;margin:4px 0 16px}
+.vrow{display:flex;gap:14px;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.thumb{position:relative;border-radius:8px;overflow:hidden;flex:none;display:flex;align-items:flex-end;justify-content:center;color:#fff;font-weight:900;text-shadow:0 2px 6px rgba(0,0,0,.6);text-align:center}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.thumb .emo{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-size:40px}
+.thumb .cap{position:relative;padding:8px;font-size:12px;line-height:1.3}
+.rank{position:absolute;top:8px;left:8px;width:22px;height:22px;border-radius:50%;background:var(--red2);color:#fff;font-size:12px;display:grid;place-items:center;font-weight:800;z-index:2;text-shadow:none}
+.vinfo{flex:1;min-width:0}
+.vmeta{display:flex;justify-content:space-between;color:var(--sub);font-size:12px;gap:8px}
+.vtitle{font-weight:700;margin:4px 0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats{background:var(--panel2);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:13px}
+.stats div{display:flex;justify-content:space-between}
+.stats span{color:var(--sub)}
+.stats b{font-variant-numeric:tabular-nums}
+.stats .hot span,.stats .hot b{color:var(--red);font-weight:700}
+.vfoot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--sub)}
+.dur{border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--text)}
+.peaks{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:10px;margin-top:8px}
+.peaks div{padding:12px 14px;border-left:1px solid var(--line)}
+.peaks div:first-child{border-left:0}
+.peaks small{display:flex;align-items:center;gap:6px;color:var(--sub)}
+.peaks small i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.peaks b{display:block;font-size:16px;margin-top:4px}
+.kw{display:flex;flex-wrap:wrap;gap:8px}
+.kw span{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-weight:600}
+.kw span em{font-style:normal;color:var(--red);font-size:12px;margin-left:5px}
+.bars .b{display:grid;grid-template-columns:80px 1fr 70px;gap:10px;align-items:center;margin:8px 0;font-size:13px}
+.bars .track{height:10px;background:var(--panel2);border-radius:6px;overflow:hidden}
+.bars .fill{height:100%;background:var(--red);border-radius:6px}
+.bars .b span:last-child{text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}
+.vgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.vcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s}
+.vcard:hover{transform:translateY(-3px)}
+.vcard .thumb{width:100%;aspect-ratio:9/14;border-radius:0}
+.vcard .thumb .emo{font-size:64px}
+.vcard .thumb .cap{font-size:17px;padding:14px}
+.vcard .chn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;z-index:2;text-shadow:none}
+.vcard .body{padding:12px 14px}
+.vcard .t{font-weight:700;font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:42px}
+.vcard .hotv{color:var(--red);font-weight:800;font-size:18px;margin-top:6px}
+.vcard .mini{display:flex;gap:10px;color:var(--sub);font-size:12px;flex-wrap:wrap}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.ccard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.chead{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.avatar{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:26px;position:relative;flex:none}
+.avatar .rank{top:-4px;left:-4px}
+.cname{font-weight:800;font-size:16px}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 8px;font-size:12px;color:var(--sub);margin-right:6px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);background:var(--panel2);border-radius:10px;text-align:center;padding:12px 4px}
+.kpis small{display:block;color:var(--sub);font-size:12px}
+.kpis b{font-size:18px;font-variant-numeric:tabular-nums}
+.kpis .hot small,.kpis .hot b{color:var(--red)}
+.avgline{text-align:center;margin:12px 0 4px}
+.avgline span{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-size:12px;font-weight:700}
+.kpis.plain{background:transparent}
+.cthumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.cthumbs .thumb{aspect-ratio:9/14;width:100%}
+.cthumbs .thumb .emo{font-size:24px}
+.cthumbs .empty{background:var(--panel2);border-radius:8px;aspect-ratio:9/14}
+.cthumbs .thumb .cap{font-size:11px}
+.rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.rbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rbox .rh{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);font-weight:700}
+.seg{display:flex;gap:2px;background:var(--panel2);border-radius:8px;padding:2px}
+.seg button{border:0;background:transparent;color:var(--sub);padding:3px 10px;border-radius:6px;font-size:12px}
+.seg button.on{background:var(--panel);color:var(--text);font-weight:700}
+.rli{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.rli:last-child{border-bottom:0}
+.rli .n{width:16px;color:var(--sub);font-weight:700}
+.rli .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:15px;flex:none}
+.rli .nm{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.rli .v{color:var(--red);font-weight:600;font-variant-numeric:tabular-nums}
+.rli .chg{font-size:12px;width:34px;text-align:right}
+.up{color:var(--red)} .down{color:var(--blue)}
+.searchbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.searchbar input{flex:1;min-width:220px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:10px 16px;font:inherit}
+.searchbar input:focus{outline:2px solid var(--red);outline-offset:-1px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+th{color:var(--sub);font-weight:600;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+.score{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
+.s5{background:#ff2e3b22;color:var(--red)} .s4{background:#ffbe2e22;color:var(--yellow)} .s3{background:#38b6ff22;color:var(--blue)} .s2,.s1{background:var(--panel2);color:var(--sub)}
+.badge{font-size:11px;border-radius:4px;padding:1px 6px;font-weight:700}
+.badge.ad{background:#2fd38a22;color:var(--green)} .badge.ai{background:#a07cff22;color:var(--purple)}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.open{display:flex}
+.mbox{background:var(--panel);color:var(--text);border-radius:14px;width:min(740px,100%);max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.mhead{display:flex;justify-content:space-between;align-items:center;padding:18px 22px 8px}
+.mhead h2{margin:0;font-size:19px}
+.mtabs{display:flex;gap:18px;padding:0 22px;border-bottom:1px solid var(--line)}
+.mtabs button{background:none;border:0;color:var(--sub);padding:8px 0;border-bottom:2px solid transparent;font-size:14px}
+.mtabs button.on{color:var(--text);border-color:var(--red);font-weight:700}
+.mbody{overflow-y:auto;padding:8px 22px 18px}
+.mbody h4{margin:18px 0 8px;font-size:15px}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 12px}
+.opts label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.opts input{accent-color:var(--red);width:16px;height:16px}
+.sel{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sel select,.mbody input[type=text],.mbody input[type=number],.mbody input[type=password]{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px 12px;font:inherit}
+.lvl{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lvl button{border:1px solid var(--line);background:transparent;color:var(--text);padding:10px 4px;border-radius:8px}
+.lvl button.on{border-color:var(--red);color:var(--red);font-weight:700;background:#ff2e3b12}
+.range{display:flex;gap:10px;align-items:center;margin-top:8px}
+.mfoot{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;border-top:1px solid var(--line)}
+.linkbtn{background:none;border:0;color:var(--text);text-decoration:underline;font-weight:700}
+.note{background:var(--panel2);border-radius:8px;padding:10px 12px;color:var(--sub);font-size:12px;margin-top:10px}
+.pill-live{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.pill-live i{width:7px;height:7px;border-radius:50%;background:var(--yellow)}
+.pill-live.live i{background:var(--green)}
+.empty-state{padding:40px;text-align:center;color:var(--sub)}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:40px 0}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:600;opacity:0;transition:.25s;z-index:60;pointer-events:none}
+.toast.show{opacity:1}
+svg text{fill:var(--sub);font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:var(--shadow);display:none;z-index:5}
+@media (max-width:1000px){.vgrid{grid-template-columns:repeat(3,1fr)}.cgrid,.rgrid{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){
+  .wrap{padding:0 16px}.grid2{grid-template-columns:1fr}.vgrid{grid-template-columns:1fr 1fr}.cgrid,.rgrid{grid-template-columns:1fr}
+  .hdr{gap:12px}.logo span{display:none}.peaks{grid-template-columns:1fr 1fr}.peaks div:nth-child(3){border-left:0}
+  .peaks div:nth-child(n+3){border-top:1px solid var(--line)}.opts{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr}
+  h1{font-size:26px}.hbtn .btn:not(.icon){display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap hdr">
+    <a class="logo" href="#analysis"><i>↗</i><span>숏폼<b>레이더</b></span></a>
+    <nav id="nav">
+      <a href="#analysis" data-p="analysis">영상 분석</a>
+      <a href="#videos" data-p="videos">급상승 영상</a>
+      <a href="#channels" data-p="channels">급상승 채널</a>
+      <a href="#search" data-p="search">채널·영상 검색</a>
+      <a href="#ranking" data-p="ranking">랭킹</a>
+    </nav>
+    <div class="hbtn">
+      <button class="btn icon" id="themeBtn" title="테마 전환">☀</button>
+      <button class="btn" id="apiBtn">데이터 설정</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+<footer class="wrap">숏폼레이더 · 데모 데이터는 임의로 생성된 값입니다 · YouTube API 키를 연결하면 실제 인기 영상으로 분석합니다</footer>
+
+<!-- 고급 필터 모달 -->
+<div class="modal" id="filterModal">
+  <div class="mbox">
+    <div class="mhead"><h2>고급 필터 옵션</h2><button class="btn icon" data-close>✕</button></div>
+    <div class="mtabs"><button class="on" data-mt="basic">기본</button><button data-mt="video">영상</button></div>
+    <div class="mbody" id="fbody"></div>
+    <div class="mfoot"><button class="linkbtn" id="fReset">전체 해제</button><button class="btn red" id="fApply">필터 적용</button></div>
+  </div>
+</div>
+
+<!-- API 설정 모달 -->
+<div class="modal" id="apiModal">
+  <div class="mbox" style="width:min(520px,100%)">
+    <div class="mhead"><h2>데이터 설정</h2><button class="btn icon" data-close>✕</button></div>
+    <div class="mbody">
+      <h4>YouTube Data API v3 키</h4>
+      <input type="password" id="apiKey" placeholder="AIza... 로 시작하는 키">
+      <div class="note">키를 넣으면 한국(KR) 인기 영상 차트를 카테고리별로 불러와 분석합니다. 키는 이 브라우저(localStorage)에만 저장되고 YouTube 외에는 전송되지 않습니다.<br>키 발급: Google Cloud Console → API 및 서비스 → YouTube Data API v3 사용 설정 → 사용자 인증 정보 → API 키</div>
+      <h4>영상 길이 기준 (숏폼으로 볼 최대 길이)</h4>
+      <div class="opts" id="durOpts">
+        <label><input type="radio" name="dur" value="60">60초 이하</label>
+        <label><input type="radio" name="dur" value="180" checked>3분 이하</label>
+        <label><input type="radio" name="dur" value="0">길이 제한 없음</label>
+      </div>
+      <div id="apiStatus" class="note" style="display:none"></div>
+    </div>
+    <div class="mfoot"><button class="linkbtn" id="useDemo">데모 데이터로 보기</button><button class="btn red" id="apiLoad">실제 데이터 불러오기</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 기본 설정 ============ */
+const CATS=[
+  {id:1,name:"영화/애니",emo:"🎬"},{id:2,name:"자동차",emo:"🚗"},{id:10,name:"음악",emo:"🎵"},{id:15,name:"동물",emo:"🐶"},
+  {id:17,name:"스포츠",emo:"⚽"},{id:19,name:"여행",emo:"✈️"},{id:20,name:"게임",emo:"🎮"},{id:22,name:"일상/로그",emo:"📷"},
+  {id:23,name:"코미디",emo:"😂"},{id:24,name:"엔터",emo:"⭐"},{id:25,name:"뉴스",emo:"📰"},{id:26,name:"스타일",emo:"💄"},
+  {id:27,name:"교육",emo:"📚"},{id:28,name:"IT/기술",emo:"💻"},{id:29,name:"사회",emo:"🤝"}
+];
+const catById=Object.fromEntries(CATS.map(c=>[c.id,c]));
+const $=s=>document.querySelector(s);
+const fmt=n=>Math.round(n).toLocaleString("ko-KR");
+const short=n=>n>=1e8?(n/1e8).toFixed(1).replace(/\.0$/,"")+"억":n>=1e4?(n/1e4).toFixed(n>=1e5?0:1).replace(/\.0$/,"")+"만":fmt(n);
+const pad=n=>String(n).padStart(2,"0");
+const ampm=h=>(h<12?"오전 ":"오후 ")+((h%12)||12)+"시";
+const timeStr=d=>(d.getHours()<12?"오전 ":"오후 ")+((d.getHours()%12)||12)+":"+pad(d.getMinutes());
+const durStr=s=>pad(Math.floor(s/60))+":"+pad(s%60);
+const dayKey=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200)}
+function store(k,v){try{v===undefined?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+
+/* ============ 데모 데이터 생성 ============ */
+const TOPICS={
+  1:["이 장면 보고 소름 돋음","결말 반전 미쳤다","3분 만에 보는 명작","애니 명장면 모음","배우 애드리브 레전드"],
+  2:["신차 실내 처음 공개","블박에 찍힌 황당 상황","주차 고수의 기술","전기차 겨울 주행거리 실화","중고차 사기 피하는 법"],
+  10:["라이브 고음 미쳤다","길거리 버스킹 반응","원곡자 앞에서 부른 노래","이 노래 요즘 왜 뜨냐","커버 장인 등장"],
+  15:["고양이가 집사 깨우는 법","강아지 첫 눈 반응","주인 바뀐 줄 아는 댕댕이","햄스터 먹방","아기 고양이 구조 그후"],
+  17:["역대급 버저비터","손흥민 미친 터치","유소년 축구 천재","헬스장 빌런 참교육","1초 만에 끝난 경기"],
+  18:[],
+  19:["일본 편의점 꿀조합","제주 숨은 명소","유럽 소매치기 실제 상황","10만원으로 3일 여행","비행기 좌석 꿀팁"],
+  20:["신규 업데이트 버그 발견","랭커의 미친 컨트롤","1분 만에 클리어","게임 속 숨겨진 이스터에그","현질 없이 최강 만들기"],
+  22:["자취생 현실 아침","퇴근 후 루틴","출근길 해프닝","편의점 알바 썰","할머니의 마지막 요구"],
+  23:["한국 사람이 가장 좋아하는 해피엔딩 ㄷㄷ","사장님 몰래카메라","급식 먹방 상황극","MZ 회사 생활","엄마한테 걸렸을 때"],
+  24:["아이돌 직캠 반응 폭발","예능 레전드 장면","무대 사고 대처","연습생 시절 공개","팬싸 역대급 순간"],
+  25:["오늘 아침 주요 뉴스","현장 영상 단독","속보 정리 1분","이번 주 논란 총정리","세금 이렇게 바뀐다"],
+  26:["5분 데일리 메이크업","겨울 코트 코디 3가지","올리브영 찐템","남자 머리 셀프컷","1만원 이하 꿀템"],
+  27:["영어 한 문장 마스터","1분 경제 상식","수학 꿀팁 이거면 끝","역사 속 반전 이야기","공부 집중력 올리는 법"],
+  28:["옛날 폰에 충전기를 꽂았더니","아이폰 숨은 기능","1초 만에 100% 충전","AI로 영상 만들기","노트북 이렇게 쓰지 마세요"],
+  29:["시민이 막아낸 사고","착한 가게 사장님","길에서 지갑 주웠을 때","어르신 도와준 학생","동네 실화 사연"]
+};
+const NAMEBASE=["정치-뉴스","대쪽신","박쌍덕","뫄쓩","민서율","아아한잔","오늘의냥","차밍카","겜돌이","하루한곡","여행가방","뷰티로그","공부왕","테크박사","썰푸는언니","웃참챌린지","동네소식","직캠맛집","축구신동","먹방요정","1분지식","드라이브인","리뷰왕김씨","냥이집사","자취왕","코디천재","시네필","뉴스한입","세상만사","게임하는형"];
+function makeDemo(){
+  const r=rng(20261118);
+  const now=new Date();
+  const channels=NAMEBASE.map((n,i)=>{
+    const cat=CATS[Math.floor(r()*CATS.length)].id;
+    return {id:"c"+i,name:n,cat,subs:Math.round(Math.exp(8+r()*7.5)),emo:catById[cat].emo,hue:Math.floor(r()*360),prevRank:0};
+  });
+  const hourW=[3,2,1,1,1,1,3,6,5,7,6,8,7,9,6,8,10,11,13,11,9,10,7,6];
+  const pickHour=()=>{let t=r()*hourW.reduce((a,b)=>a+b),h=0;while(t>hourW[h]){t-=hourW[h];h++}return h};
+  const vids=[];
+  for(let d=0;d<7;d++){
+    const base=new Date(now);base.setHours(0,0,0,0);base.setDate(base.getDate()-d);
+    const cnt=40+Math.floor(r()*20);
+    for(let i=0;i<cnt;i++){
+      const ch=channels[Math.floor(Math.pow(r(),1.4)*channels.length)];
+      const cat=r()<.7?ch.cat:CATS[Math.floor(r()*CATS.length)].id;
+      const list=TOPICS[cat];const title=list[Math.floor(r()*list.length)]+(r()<.35?" ㄷㄷ":r()<.3?" (실화)":"");
+      const up=new Date(base);up.setHours(pickHour(),Math.floor(r()*60));
+      if(up>now)up.setTime(now.getTime()-r()*3600e3*3);
+      const views=Math.round(Math.exp(9+r()*6.3));
+      vids.push({id:"v"+d+"_"+i,title,channelId:ch.id,channel:ch.name,cat,views,
+        likes:Math.round(views*(.008+r()*.03)),comments:Math.round(views*(.0003+r()*.0025)),
+        duration:10+Math.floor(r()*170),uploaded:up,thumb:null,hue:Math.floor(r()*360),
+        isAd:r()<.08,isAI:r()<.12});
+    }
+  }
+  return {channels,vids,source:"demo",collected:now};
+}
+
+/* ============ YouTube API 실데이터 ============ */
+function parseISODur(s){const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(s||"")||[];return(+m[1]||0)*3600+(+m[2]||0)*60+(+m[3]||0)}
+async function loadYouTube(key,maxDur,status){
+  const vids=[],seen=new Set();
+  const api=(p,q)=>fetch(`https://www.googleapis.com/youtube/v3/${p}?${new URLSearchParams({...q,key})}`).then(async r=>{const j=await r.json();if(j.error)throw new Error(j.error.message);return j});
+  const targets=[null,...CATS.map(c=>c.id)];
+  for(const cid of targets){
+    status(`인기 영상 불러오는 중… ${cid?catById[cid].name:"전체"}`);
+    let pageToken="";
+    for(let p=0;p<(cid?1:4);p++){
+      const q={part:"snippet,statistics,contentDetails",chart:"mostPopular",regionCode:"KR",maxResults:50};
+      if(cid)q.videoCategoryId=cid; if(pageToken)q.pageToken=pageToken;
+      let j;try{j=await api("videos",q)}catch(e){if(!cid)throw e;break}
+      for(const it of j.items||[]){
+        if(seen.has(it.id))continue;seen.add(it.id);
+        const dur=parseISODur(it.contentDetails.duration);
+        if(maxDur&&dur>maxDur)continue;
+        const st=it.statistics||{};
+        vids.push({id:it.id,title:it.snippet.title,channelId:it.snippet.channelId,channel:it.snippet.channelTitle,
+          cat:+it.snippet.categoryId,views:+st.viewCount||0,likes:+st.likeCount||0,comments:+st.commentCount||0,
+          duration:dur,uploaded:new Date(it.snippet.publishedAt),
+          thumb:(it.snippet.thumbnails.high||it.snippet.thumbnails.medium||it.snippet.thumbnails.default).url,
+          hue:hash(it.id)%360,isAd:false,isAI:!!(it.status&&it.status.containsSyntheticMedia)});
+      }
+      pageToken=j.nextPageToken;if(!pageToken)break;
+    }
+  }
+  status("채널 정보 불러오는 중…");
+  const ids=[...new Set(vids.map(v=>v.channelId))],channels=[];
+  for(let i=0;i<ids.length;i+=50){
+    const j=await api("channels",{part:"snippet,statistics",id:ids.slice(i,i+50).join(",")});
+    for(const c of j.items||[])channels.push({id:c.id,name:c.snippet.title,subs:+c.statistics.subscriberCount||0,
+      thumb:c.snippet.thumbnails.default.url,hue:hash(c.id)%360,emo:"📺",cat:0});
+  }
+  const cmap=Object.fromEntries(channels.map(c=>[c.id,c]));
+  vids.forEach(v=>{const c=cmap[v.channelId];if(c&&!c.cat)c.cat=v.cat});
+  return {channels,vids,source:"youtube",collected:new Date()};
+}
+
+/* ============ 지표 계산 ============ */
+// 급상승 수치: 시간당 조회수를 하루 기준으로 환산 + 참여도(좋아요·댓글) 가중치
+function enrich(data){
+  const now=data.collected;
+  const cmap=Object.fromEntries(data.channels.map(c=>[c.id,c]));
+  data.cmap=cmap;
+  for(const v of data.vids){
+    const hrs=Math.max(1,(now-v.uploaded)/3600e3);
+    const eng=(v.likes+v.comments*5)/Math.max(1,v.views);
+    v.hours=hrs;
+    v.hot=Math.round(v.views*Math.pow(24/hrs,.55)*(1+eng*12));
+    v.subs=(cmap[v.channelId]||{}).subs||0;
+  }
+  const hs=data.vids.map(v=>v.hot).sort((a,b)=>a-b);
+  const q=p=>hs[Math.floor(p*(hs.length-1))]||0;
+  const cuts=[q(.2),q(.45),q(.7),q(.9)];
+  for(const v of data.vids)v.algo=1+cuts.filter(c=>v.hot>c).length; // 1~5 단계
+  return data;
+}
+
+/* ============ 상태 ============ */
+let DATA=null;
+const S={date:"today",cat:0,vsort:"hot",cperiod:7,csort:"hot",q:"",
+  f:{sort:"basic",cat:0,period:0,algo:[],views:["all"],vmin:"",vmax:"",type:"all",ai:"all",exclude:""},rank:{}};
+
+function dateChips(){
+  const out=[],now=DATA.collected;
+  for(let d=6;d>=0;d--){
+    const x=new Date(now);x.setDate(x.getDate()-d);
+    out.push({key:dayKey(x),label:d===0?"오늘":d===1?"어제":(x.getMonth()+1)+"/"+x.getDate()});
+  }
+  return out;
+}
+function vidsFor(dateKey,cat){
+  return DATA.vids.filter(v=>(!dateKey||dayKey(v.uploaded)===dateKey)&&(!cat||v.cat===cat));
+}
+function currentDateKey(){return S.date==="today"?dayKey(DATA.collected):S.date}
+
+/* ============ 공통 UI 조각 ============ */
+function thumbHTML(v,{rank,big,chn}={}){
+  const cat=catById[v.cat]||{emo:"🎞️"};
+  const bg=`linear-gradient(160deg,hsl(${v.hue} 55% 38%),hsl(${(v.hue+50)%360} 60% 14%))`;
+  return `<div class="thumb" style="background:${bg};${big?"":"width:80px;height:124px"}">
+    ${v.thumb?`<img src="${v.thumb}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<div class="emo">${cat.emo}</div><div class="cap">${esc(v.title).slice(0,big?28:14)}</div>`}
+    ${rank?`<div class="rank">${rank}</div>`:""}${chn?`<div class="chn">${esc(v.channel)}</div>`:""}</div>`;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function chipsHTML(items,cur,attr){return `<div class="chips">${items.map(i=>`<button class="chip ${String(i.key)===String(cur)?"on":""}" data-${attr}="${i.key}">${i.label}</button>`).join("")}</div>`}
+function catChips(){return chipsHTML([{key:0,label:"전체"},...CATS.map(c=>({key:c.id,label:c.name}))],S.cat,"cat")}
+function avatarHTML(c,size=56,rank){
+  const st=`width:${size}px;height:${size}px;font-size:${size*.45}px;background:hsl(${c.hue} 50% 30%)`;
+  return `<div class="avatar" style="${st}">${c.thumb?`<img src="${c.thumb}" style="width:100%;height:100%;border-radius:50%" referrerpolicy="no-referrer">`:(c.emo||"📺")}${rank?`<div class="rank">${rank}</div>`:""}</div>`;
+}
+function head(eyebrow,title,lines,right=""){
+  return `<div class="eyebrow">${eyebrow}</div><div class="titlerow"><div><h1>${title}</h1>${lines.map(l=>`<p class="desc">${l}</p>`).join("")}</div>${right}</div>`;
+}
+const HOTDESC=`<span class="bolt">⚡</span> <b>급상승 수치</b>는 지금 얼마나 빠르게 반응을 얻고 있는지를 나타냅니다. 수치가 높을수록 지금 가장 빠르게 퍼지는 영상입니다.`;
+function collectedHTML(){const d=DATA.collected;return `<div class="collected"><span class="pill-live ${DATA.source==="youtube"?"live":""}"><i></i>${DATA.source==="youtube"?"YouTube 실데이터":"데모 데이터"}</span><div style="margin-top:6px">⏱ 수집 시간</div><strong>${d.getMonth()+1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}</strong></div>`}
+
+/* ============ 페이지: 영상 분석 ============ */
+function pageAnalysis(){
+  const list=vidsFor(currentDateKey(),S.cat).sort((a,b)=>b.hot-a.hot);
+  const top=list.slice(0,2);
+  // 시간대 집계
+  const keys=["hot","views","likes","comments"];
+  const sums=keys.map(()=>Array(24).fill(0));
+  list.forEach(v=>keys.forEach((k,i)=>sums[i][v.uploaded.getHours()]+=v[k]));
+  const peaks=sums.map(a=>a.indexOf(Math.max(...a)));
+  // 키워드
+  const stop=new Set(["ㄷㄷ","(실화)","이","그","더","이렇게","왜","한","the","a","of","and","to","in","-","|","#shorts","shorts"]);
+  const kw={};
+  list.forEach(v=>v.title.replace(/[#\[\]\(\)!?.,~"'|]/g," ").split(/\s+/).forEach(w=>{w=w.trim();if(w.length<2||stop.has(w.toLowerCase())||/^\d+$/.test(w))return;kw[w]=(kw[w]||0)+v.hot}));
+  const kws=Object.entries(kw).sort((a,b)=>b[1]-a[1]).slice(0,16);
+  // 카테고리
+  const byCat={};vidsFor(currentDateKey(),0).forEach(v=>byCat[v.cat]=(byCat[v.cat]||0)+v.hot);
+  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,8);const cmax=cats[0]?cats[0][1]:1;
+
+  return head("트렌드 분석","영상 분석",[HOTDESC,"일별·카테고리별 트렌드와 인기 키워드, 업로드 시간대를 확인하세요."],collectedHTML())+
+  `<div class="filters">${chipsHTML(dateChips().map(d=>({key:d.label==="오늘"?"today":d.key,label:d.label})),S.date,"date")}${catChips()}</div>
+  <div class="grid2">
+    <div class="card"><h3>급상승 영상</h3><p class="cdesc">선택 일자 기준 급상승 상위 2개 영상입니다.</p>
+      ${top.length?top.map((v,i)=>`<div class="vrow">${thumbHTML(v,{rank:i+1})}<div class="vinfo">
+        <div class="vmeta"><span>${(catById[v.cat]||{name:"기타"}).name}</span><span>${esc(v.channel)}</span></div>
+        <div class="vtitle" title="${esc(v.title)}">${esc(v.title)}</div>
+        <div class="stats"><div class="hot"><span>급상승 ⚡</span><b>${fmt(v.hot)}</b></div><div><span>조회수</span><b>${fmt(v.views)}</b></div>
+        <div><span>좋아요</span><b>${fmt(v.likes)}</b></div><div><span>댓글</span><b>${fmt(v.comments)}</b></div></div>
+        <div class="vfoot"><span class="dur">${durStr(v.duration)}</span><span>업로드 ${timeStr(v.uploaded)}</span></div></div></div>`).join(""):`<div class="empty-state">해당 조건의 영상이 없습니다.</div>`}
+    </div>
+    <div class="card" style="position:relative"><h3>인기 업로드 시간</h3><p class="cdesc">24시간(KST) 기준, 조회수·좋아요·댓글·급상승 별도 합계입니다.</p>
+      <div id="chart"></div><div class="tip" id="tip"></div>
+      <p class="cdesc" style="margin:14px 0 4px">가장 높았던 시간</p>
+      <div class="peaks">${[["급상승","var(--red)"],["조회수","var(--blue)"],["좋아요","var(--purple)"],["댓글","var(--yellow)"]].map((x,i)=>
+        `<div><small><i style="background:${x[1]}"></i>${x[0]}</small><b style="${i===0?"color:var(--red)":""}">${list.length?ampm(peaks[i]):"-"}</b></div>`).join("")}</div>
+    </div>
+    <div class="card"><h3>인기 키워드</h3><p class="cdesc">제목에 자주 등장한 단어를 급상승 수치로 가중한 순위입니다.</p>
+      <div class="kw">${kws.map(([w],i)=>`<span>${i+1}. ${esc(w)}${i<3?"<em>HOT</em>":""}</span>`).join("")||"<span>-</span>"}</div></div>
+    <div class="card"><h3>카테고리 점유율</h3><p class="cdesc">선택 일자 전체 영상의 카테고리별 급상승 합계입니다.</p>
+      <div class="bars">${cats.map(([c,v])=>`<div class="b"><span>${(catById[c]||{name:"기타"}).name}</span><div class="track"><div class="fill" style="width:${v/cmax*100}%"></div></div><span>${short(v)}</span></div>`).join("")}</div></div>
+  </div>`;
+}
+function drawChart(){
+  const el=$("#chart");if(!el)return;
+  const list=vidsFor(currentDateKey(),S.cat);
+  const series=[["hot","급상승","var(--red)"],["views","조회수","var(--blue)"],["likes","좋아요","var(--purple)"],["comments","댓글","var(--yellow)"]];
+  const W=el.clientWidth||560,H=260,pl=10,pr=10,pt=14,pb=26;
+  const x=h=>pl+h*(W-pl-pr)/23,y=v=>pt+(1-v)*(H-pt-pb);
+  const data=series.map(([k])=>{const a=Array(24).fill(0);list.forEach(v=>a[v.uploaded.getHours()]+=v[k]);const m=Math.max(...a)||1;return a.map(n=>n/m)});
+  const raw=series.map(([k])=>{const a=Array(24).fill(0);list.forEach(v=>a[v.uploaded.getHours()]+=v[k]);return a});
+  const path=pts=>{let d=`M${pts[0][0]},${pts[0][1]}`;for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    const c1=[p1[0]+(p2[0]-p0[0])/6,p1[1]+(p2[1]-p0[1])/6],c2=[p2[0]-(p3[0]-p1[0])/6,p2[1]-(p3[1]-p1[1])/6];
+    d+=` C${c1[0]},${Math.min(H-pb,c1[1])} ${c2[0]},${Math.min(H-pb,c2[1])} ${p2[0]},${p2[1]}`}return d};
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  s+=`<line x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}" stroke="var(--line)"/>`;
+  for(let h=0;h<24;h++)s+=`<text x="${x(h)}" y="${H-8}" text-anchor="middle">${h}</text>`;
+  [...data].reverse().forEach((d,ri)=>{const i=3-ri,c=series[i][2];const pts=d.map((v,h)=>[x(h),y(v)]);
+    s+=`<path d="${path(pts)}" fill="none" stroke="${c}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    pts.forEach(p=>s+=`<circle cx="${p[0]}" cy="${p[1]}" r="2.8" fill="${c}"/>`)});
+  s+=`<line id="hoverLine" y1="${pt}" y2="${H-pb}" stroke="var(--muted)" stroke-dasharray="3 3" style="display:none"/>`;
+  s+=`<rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="hit"/></svg>`;
+  el.innerHTML=s;
+  const tip=$("#tip"),hit=$("#hit"),hl=$("#hoverLine");
+  hit.addEventListener("mousemove",e=>{const r=el.getBoundingClientRect();const h=Math.max(0,Math.min(23,Math.round((e.clientX-r.left-pl)/((W-pl-pr)/23))));
+    hl.setAttribute("x1",x(h));hl.setAttribute("x2",x(h));hl.style.display="";
+    tip.innerHTML=`<b>${ampm(h)}</b><br>`+series.map((sr,i)=>`<span style="color:${sr[2]}">●</span> ${sr[1]} ${fmt(raw[i][h])}`).join("<br>");
+    tip.style.display="block";tip.style.left=Math.min(r.width-150,x(h)+30)+"px";tip.style.top=(el.offsetTop+20)+"px"});
+  hit.addEventListener("mouseleave",()=>{tip.style.display="none";hl.style.display="none"});
+}
+
+/* ============ 페이지: 급상승 영상 ============ */
+const VSORT=[["hot","⚡ 급상승"],["views","조회수 순"],["likes","좋아요 순"],["comments","댓글 순"],["uploaded","업로드 순"]];
+function pageVideos(){
+  const list=vidsFor(currentDateKey(),S.cat).sort((a,b)=>b[S.vsort]-a[S.vsort]);
+  return head("급상승 순위","급상승 영상",[HOTDESC],collectedHTML())+
+  `<div class="filters">${chipsHTML(dateChips().map(d=>({key:d.label==="오늘"?"today":d.key,label:d.label})),S.date,"date")}${catChips()}
+   ${chipsHTML(VSORT.map(([k,l])=>({key:k,label:l})),S.vsort,"vsort")}</div>
+  ${list.length?`<div class="vgrid">${list.slice(0,40).map((v,i)=>`<a class="vcard" ${DATA.source==="youtube"?`href="https://www.youtube.com/shorts/${v.id}" target="_blank" rel="noopener"`:""}>
+    ${thumbHTML(v,{rank:i+1,big:1,chn:1})}<div class="body"><div class="t">${esc(v.title)}</div>
+    <div class="hotv">⚡ ${fmt(v.hot)}</div>
+    <div class="mini"><span>👁 ${short(v.views)}</span><span>👍 ${short(v.likes)}</span><span>💬 ${short(v.comments)}</span><span>${timeStr(v.uploaded)}</span></div></div></a>`).join("")}</div>`
+  :`<div class="card empty-state">해당 조건의 영상이 없습니다.</div>`}`;
+}
+
+/* ============ 페이지: 급상승 채널 ============ */
+const CSORT=[["hot","⚡ 급상승 평균"],["ratio","구독자 대비 조회수"],["count","급상승 영상 수"],["views","조회수 평균 순"],["likes","좋아요 평균 순"],["comments","댓글 평균 순"]];
+function channelAgg(days,cat){
+  const now=DATA.collected,from=new Date(now);from.setHours(0,0,0,0);from.setDate(from.getDate()-(days-1));
+  const g={};
+  DATA.vids.filter(v=>v.uploaded>=from&&(!cat||v.cat===cat)).forEach(v=>{(g[v.channelId]=g[v.channelId]||[]).push(v)});
+  return Object.entries(g).map(([id,vs])=>{
+    const c=DATA.cmap[id]||{id,name:vs[0].channel,subs:0,hue:hash(id)%360,emo:"📺",cat:vs[0].cat};
+    const avg=k=>vs.reduce((a,v)=>a+v[k],0)/vs.length;
+    return {c,vs:vs.sort((a,b)=>b.hot-a.hot),hot:avg("hot"),views:avg("views"),likes:avg("likes"),comments:avg("comments"),count:vs.length,ratio:c.subs?avg("views")/c.subs:0};
+  });
+}
+function pageChannels(){
+  const list=channelAgg(S.cperiod,S.cat).sort((a,b)=>b[S.csort]-a[S.csort]).slice(0,30);
+  return head("급상승 순위","급상승 채널",["<b>구독자 대비</b>는 영상 1개당 평균 조회수를 구독자 수로 나눈 값입니다. 높을수록 구독자 규모에 비해 크게 퍼진 채널입니다.","조회수·좋아요·댓글은 선택한 기간에 급상승 순위에 든 영상 1개당 평균입니다."],collectedHTML())+
+  `<div class="filters">${chipsHTML([{key:7,label:"최근 7일"},{key:5,label:"최근 5일"},{key:3,label:"최근 3일"},{key:1,label:"오늘"}],S.cperiod,"cperiod")}${catChips()}
+  ${chipsHTML(CSORT.map(([k,l])=>({key:k,label:l})),S.csort,"csort")}</div>
+  ${list.length?`<div class="cgrid">${list.map((x,i)=>`<div class="ccard">
+    <div class="chead">${avatarHTML(x.c,56,i+1)}<div><div class="cname">${esc(x.c.name)}</div>
+    <span class="tag">${(catById[x.c.cat]||{name:"기타"}).name}</span><span style="color:var(--sub);font-size:12px">구독자 <b style="color:var(--text)">${short(x.c.subs)}명</b></span></div></div>
+    <div class="kpis"><div class="hot"><small>급상승 평균 ⚡</small><b>${fmt(x.hot)}</b></div><div><small>구독자 대비</small><b>${x.ratio>=1?fmt(x.ratio)+"배":(x.ratio*100).toFixed(0)+"%"}</b></div><div><small>급상승 영상</small><b>${x.count}개</b></div></div>
+    <div class="avgline"><span>영상당 평균</span></div>
+    <div class="kpis plain"><div><small>👁 조회수</small><b>${fmt(x.views)}</b></div><div><small>👍 좋아요</small><b>${fmt(x.likes)}</b></div><div><small>💬 댓글</small><b>${fmt(x.comments)}</b></div></div>
+    <div class="cthumbs">${[0,1,2,3].map(j=>x.vs[j]?thumbHTML(x.vs[j],{big:1}).replace('class="thumb"','class="thumb" style="width:100%;aspect-ratio:9/14" title="'+esc(x.vs[j].title)+'"').replace(/style="background:([^;]+);"/,'style="background:$1;"'):`<div class="empty"></div>`).join("")}</div>
+  </div>`).join("")}</div>`:`<div class="card empty-state">해당 기간에 데이터가 없습니다.</div>`}`;
+}
+
+/* ============ 페이지: 검색 (고급 필터) ============ */
+function applyF(list){
+  const f=S.f,now=DATA.collected;
+  return list.filter(v=>{
+    if(f.cat&&v.cat!==f.cat)return false;
+    if(f.period&&(now-v.uploaded)/864e5>f.period)return false;
+    if(f.algo.length&&!f.algo.includes(v.algo))return false;
+    if(!f.views.includes("all")){const ok=f.views.some(r=>r==="s"?v.views<1e5:r==="m"?v.views>=1e5&&v.views<1e6:v.views>=1e6);if(!ok)return false}
+    if(f.vmin!==""&&v.views<+f.vmin)return false;if(f.vmax!==""&&v.views>+f.vmax)return false;
+    if(f.type==="normal"&&v.isAd)return false;if(f.type==="ad"&&!v.isAd)return false;
+    if(f.ai==="only"&&!v.isAI)return false;if(f.ai==="no"&&v.isAI)return false;
+    const ex=f.exclude.split(",").map(s=>s.trim()).filter(Boolean);
+    if(ex.some(w=>v.title.includes(w)||v.channel.includes(w)))return false;
+    if(S.q&&!(v.title.toLowerCase().includes(S.q.toLowerCase())||v.channel.toLowerCase().includes(S.q.toLowerCase())))return false;
+    return true;
+  });
+}
+const ALGO=["매우 낮음","낮음","보통","높음","매우 높음"];
+function pageSearch(){
+  const f=S.f;let list=applyF(DATA.vids.slice());
+  const sk={basic:"hot",subs:"subs",views:"views",date:"uploaded"}[f.sort];list.sort((a,b)=>b[sk]-a[sk]);
+  const active=[f.cat&&catById[f.cat].name,f.period&&`최근 ${f.period}일`,f.algo.length&&`알고리즘 ${f.algo.map(a=>ALGO[a-1]).join("·")}`,
+    !f.views.includes("all")&&"조회수 구간",(f.vmin||f.vmax)&&"조회수 직접입력",f.type!=="all"&&(f.type==="ad"?"광고 영상":"일반 영상"),
+    f.ai!=="all"&&(f.ai==="only"?"AI 영상만":"AI 영상 제외"),f.exclude&&`제외: ${f.exclude}`].filter(Boolean);
+  return head("탐색","채널·영상 검색",["채널명이나 키워드로 검색하고, 고급 필터로 알고리즘 스코어·조회수 구간·영상 타입을 좁혀보세요.","<b>알고리즘 스코어</b>는 전체 영상 중 급상승 수치 분위(하위 20%~상위 10%)를 5단계로 나눈 값입니다."])+
+  `<div class="filters"><div class="searchbar"><button class="btn" id="openFilter">☰ 모든 필터${active.length?` (${active.length})`:""}</button>
+   <input id="q" placeholder="찾고 싶은 채널명 혹은 키워드를 입력해주세요." value="${esc(S.q)}"></div>
+   ${active.length?`<div class="chips" style="margin-top:10px">${active.map(a=>`<span class="chip on">${esc(a)}</span>`).join("")}</div>`:""}</div>
+  <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><h3>검색 결과 <span style="color:var(--sub);font-weight:500">${fmt(list.length)}개</span></h3></div>
+  <div class="tablewrap"><table><thead><tr><th>#</th><th>영상</th><th>채널</th><th>카테고리</th><th class="num">구독자</th><th class="num">조회수</th><th class="num">좋아요</th><th class="num">급상승</th><th>알고리즘</th><th>업로드</th></tr></thead><tbody>
+  ${list.slice(0,100).map((v,i)=>`<tr><td>${i+1}</td><td style="max-width:280px">${esc(v.title)} ${v.isAd?'<span class="badge ad">광고</span>':""}${v.isAI?' <span class="badge ai">AI</span>':""}</td>
+    <td>${esc(v.channel)}</td><td>${(catById[v.cat]||{name:"기타"}).name}</td><td class="num">${short(v.subs)}</td><td class="num">${fmt(v.views)}</td>
+    <td class="num">${fmt(v.likes)}</td><td class="num" style="color:var(--red);font-weight:700">${fmt(v.hot)}</td>
+    <td><span class="score s${v.algo}">${ALGO[v.algo-1]}</span></td><td style="white-space:nowrap">${v.uploaded.getMonth()+1}/${v.uploaded.getDate()} ${timeStr(v.uploaded)}</td></tr>`).join("")||`<tr><td colspan="10" class="empty-state">조건에 맞는 결과가 없습니다.</td></tr>`}
+  </tbody></table></div>${list.length>100?`<p class="cdesc">상위 100개만 표시합니다.</p>`:""}</div>`;
+}
+let MT="basic",DRAFT=null;
+function renderFilterBody(){
+  const f=DRAFT;
+  const radio=(name,val,label,cur)=>`<label><input type="radio" name="${name}" value="${val}" ${String(cur)===String(val)?"checked":""}>${label}</label>`;
+  const basic=`<h4>테이블 정렬</h4><div class="opts">${radio("sort","basic","기본 (급상승)",f.sort)}${radio("sort","subs","구독자 수",f.sort)}${radio("sort","views","조회수",f.sort)}${radio("sort","date","업로드 일자",f.sort)}</div>
+    <h4>기본</h4><div class="sel"><div><div class="cdesc" style="margin:0 0 6px">국가</div><select disabled><option>대한민국</option></select></div>
+    <div><div class="cdesc" style="margin:0 0 6px">카테고리</div><select id="fcat"><option value="0">전체</option>${CATS.map(c=>`<option value="${c.id}" ${f.cat===c.id?"selected":""}>${c.name}</option>`).join("")}</select></div></div>`;
+  const video=`<h4>업로드 일자</h4><div class="opts">${[[0,"전체"],[1,"최근 1일"],[2,"최근 2일"],[3,"최근 3일"],[5,"최근 5일"],[7,"최근 7일"]].map(([v,l])=>radio("period",v,l,f.period)).join("")}</div>
+    <h4>알고리즘 스코어</h4><div class="lvl">${ALGO.map((a,i)=>`<button data-algo="${i+1}" class="${f.algo.includes(i+1)?"on":""}">${a}</button>`).join("")}</div>
+    <h4>조회수</h4><div class="opts">${[["all","전체"],["s","~ 10만"],["m","10만 ~ 100만"],["l","100만 +"]].map(([v,l])=>`<label><input type="checkbox" name="views" value="${v}" ${f.views.includes(v)?"checked":""}>${l}</label>`).join("")}</div>
+    <div class="range"><input type="number" id="vmin" placeholder="최소" value="${f.vmin}"> — <input type="number" id="vmax" placeholder="최대" value="${f.vmax}"></div>
+    <h4>영상 타입</h4><div class="opts">${radio("type","all","전체",f.type)}${radio("type","normal","일반 영상",f.type)}${radio("type","ad","광고 영상",f.type)}</div>
+    <h4>AI 사용 영상</h4><div class="opts">${radio("ai","all","전체",f.ai)}${radio("ai","only","AI 사용 영상 보기",f.ai)}${radio("ai","no","AI 사용 영상 제거",f.ai)}</div>
+    <h4>제외 키워드</h4><input type="text" id="fex" placeholder="쉼표로 구분, 최대 3개 (예: 광고, 뉴스)" value="${esc(f.exclude)}">`;
+  $("#fbody").innerHTML=MT==="basic"?basic+video:video;
+  document.querySelectorAll(".mtabs button").forEach(b=>b.classList.toggle("on",b.dataset.mt===MT));
+}
+function readDraft(){
+  const g=n=>{const e=document.querySelector(`#fbody input[name=${n}]:checked`);return e?e.value:null};
+  const f=DRAFT;
+  if(g("sort"))f.sort=g("sort");if($("#fcat"))f.cat=+$("#fcat").value;
+  if(g("period")!==null)f.period=+g("period");if(g("type"))f.type=g("type");if(g("ai"))f.ai=g("ai");
+  const vs=[...document.querySelectorAll("#fbody input[name=views]:checked")].map(e=>e.value);if(document.querySelector("#fbody input[name=views]"))f.views=vs.length?vs:["all"];
+  if($("#vmin")){f.vmin=$("#vmin").value;f.vmax=$("#vmax").value}
+  if($("#fex"))f.exclude=$("#fex").value.split(",").map(s=>s.trim()).filter(Boolean).slice(0,3).join(", ");
+}
+
+/* ============ 페이지: 랭킹 대시보드 ============ */
+function rankBox(id,title,items){
+  const per=S.rank[id]||"d";
+  return `<div class="rbox"><div class="rh">${title}<div class="seg"><button data-rk="${id}:d" class="${per==="d"?"on":""}">일간</button><button data-rk="${id}:w" class="${per==="w"?"on":""}">주간</button></div></div>
+  ${items(per==="d"?1:7).slice(0,5).map((x,i)=>`<div class="rli"><span class="n">${i+1}</span>${x.av}<span class="nm" title="${esc(x.name)}">${esc(x.name)}</span><span class="v">${x.val}</span>${x.chg!==undefined?`<span class="chg ${x.chg>0?"up":x.chg<0?"down":""}">${x.chg>0?"▲"+x.chg:x.chg<0?"▼"+(-x.chg):"–"}</span>`:""}</div>`).join("")||`<div class="empty-state">데이터 없음</div>`}</div>`;
+}
+function pageRanking(){
+  const av=c=>`<div class="av" style="background:hsl(${c.hue} 50% 30%)">${c.thumb?`<img src="${c.thumb}" style="width:100%;height:100%;border-radius:50%" referrerpolicy="no-referrer">`:(c.emo||"📺")}</div>`;
+  const vav=v=>`<div class="av" style="border-radius:6px;background:hsl(${v.hue} 50% 30%)">${v.thumb?`<img src="${v.thumb}" style="width:100%;height:100%;border-radius:6px;object-fit:cover" referrerpolicy="no-referrer">`:(catById[v.cat]||{emo:"🎞️"}).emo}</div>`;
+  const recent=days=>{const f=new Date(DATA.collected);f.setHours(0,0,0,0);f.setDate(f.getDate()-(days-1));return DATA.vids.filter(v=>v.uploaded>=f)};
+  const chRank=(days,key)=>{const cur=channelAgg(days,0).sort((a,b)=>b[key]-a[key]);
+    const prevFrom=new Date(DATA.collected);prevFrom.setDate(prevFrom.getDate()-days*2);
+    const prev={};DATA.vids.filter(v=>v.uploaded>=prevFrom&&(DATA.collected-v.uploaded)/864e5>=days).forEach(v=>prev[v.channelId]=(prev[v.channelId]||0)+v[key]);
+    const pr=Object.entries(prev).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+    return cur.map((x,i)=>({x,chg:pr.indexOf(x.c.id)<0?undefined:pr.indexOf(x.c.id)-i}))};
+  return head("한눈에 보기","랭킹",["일간·주간 기준으로 채널과 영상 순위를 모았습니다. ▲▼는 직전 기간 대비 순위 변화입니다."],collectedHTML())+
+  `<div class="rgrid" style="margin-top:24px">
+   ${rankBox("hotch","급상승 채널",d=>chRank(d,"hot").map(({x,chg})=>({av:av(x.c),name:x.c.name,val:short(x.hot),chg})))}
+   ${rankBox("ratio","구독자 대비 조회수",d=>channelAgg(d,0).filter(x=>x.ratio).sort((a,b)=>b.ratio-a.ratio).map(x=>({av:av(x.c),name:x.c.name,val:x.ratio>=1?fmt(x.ratio)+"배":(x.ratio*100).toFixed(0)+"%"})))}
+   ${rankBox("pop","인기 채널 (총 조회수)",d=>chRank(d,"views").map(({x,chg})=>({av:av(x.c),name:x.c.name,val:short(x.views*x.count),chg})))}
+   ${rankBox("topv","최다 조회 영상",d=>recent(d).sort((a,b)=>b.views-a.views).map(v=>({av:vav(v),name:v.title,val:"+"+short(v.views)})))}
+   ${rankBox("topl","좋아요 많은 영상",d=>recent(d).sort((a,b)=>b.likes-a.likes).map(v=>({av:vav(v),name:v.title,val:short(v.likes)})))}
+   ${rankBox("topc","댓글 반응 영상",d=>recent(d).sort((a,b)=>b.comments/b.views-a.comments/a.views).map(v=>({av:vav(v),name:v.title,val:(v.comments/Math.max(1,v.views)*100).toFixed(2)+"%"})))}
+  </div>`;
+}
+
+/* ============ 라우팅/이벤트 ============ */
+const PAGES={analysis:pageAnalysis,videos:pageVideos,channels:pageChannels,search:pageSearch,ranking:pageRanking};
+let PAGE=PAGES[location.hash.slice(1)]?location.hash.slice(1):"analysis";
+function go(p){PAGE=PAGES[p]?p:"analysis";try{history.replaceState(null,"","#"+PAGE)}catch(e){}render();scrollTo(0,0)}
+document.addEventListener("click",e=>{const a=e.target.closest('a[href^="#"]');if(!a)return;e.preventDefault();go(a.getAttribute("href").slice(1))});
+function render(){
+  const page=PAGE;
+  document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.p===page));
+  $("#app").innerHTML=PAGES[page]();
+  if(page==="analysis")drawChart();
+}
+window.addEventListener("hashchange",()=>{const p=location.hash.slice(1);if(PAGES[p]&&p!==PAGE)go(p)});
+window.addEventListener("resize",()=>{clearTimeout(window._rz);window._rz=setTimeout(drawChart,150)});
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-date],[data-cat],[data-vsort],[data-cperiod],[data-csort],[data-rk],[data-close],[data-mt],[data-algo]");
+  if(!t)return;
+  const d=t.dataset;
+  if(d.date!==undefined)S.date=d.date;
+  else if(d.cat!==undefined)S.cat=+d.cat;
+  else if(d.vsort)S.vsort=d.vsort;
+  else if(d.cperiod)S.cperiod=+d.cperiod;
+  else if(d.csort)S.csort=d.csort;
+  else if(d.rk){const[id,v]=d.rk.split(":");S.rank[id]=v}
+  else if(d.close!==undefined){t.closest(".modal").classList.remove("open");return}
+  else if(d.mt){readDraft();MT=d.mt;renderFilterBody();return}
+  else if(d.algo){const n=+d.algo,a=DRAFT.algo;a.includes(n)?a.splice(a.indexOf(n),1):a.push(n);t.classList.toggle("on");return}
+  render();
+});
+document.addEventListener("input",e=>{
+  if(e.target.id==="q"){S.q=e.target.value;clearTimeout(window._qt);window._qt=setTimeout(()=>{const pos=e.target.selectionStart;render();const q=$("#q");q.focus();q.setSelectionRange(pos,pos)},250)}
+});
+document.addEventListener("change",e=>{
+  // "전체" 조회수 체크 시 다른 구간 해제
+  if(e.target.name==="views"){const all=document.querySelector('#fbody input[name=views][value=all]');
+    if(e.target.value==="all"&&e.target.checked)document.querySelectorAll('#fbody input[name=views]:not([value=all])').forEach(x=>x.checked=false);
+    else if(e.target.checked)all.checked=false}
+});
+document.addEventListener("click",e=>{if(e.target.id==="openFilter"){DRAFT=JSON.parse(JSON.stringify(S.f));MT="basic";renderFilterBody();$("#filterModal").classList.add("open")}});
+$("#fApply").onclick=()=>{readDraft();S.f=DRAFT;$("#filterModal").classList.remove("open");render();toast("필터를 적용했습니다")};
+$("#fReset").onclick=()=>{DRAFT={sort:"basic",cat:0,period:0,algo:[],views:["all"],vmin:"",vmax:"",type:"all",ai:"all",exclude:""};renderFilterBody()};
+document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open")}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".modal.open").forEach(m=>m.classList.remove("open"))});
+
+/* 테마 */
+function setTheme(t){document.documentElement.dataset.theme=t;$("#themeBtn").textContent=t==="light"?"☾":"☀";store("theme",t)}
+setTheme(load("theme")||"dark");
+$("#themeBtn").onclick=()=>{setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");drawChart()};
+
+/* 데이터 설정 */
+$("#apiBtn").onclick=()=>{$("#apiKey").value=load("ytkey")||"";const d=load("maxdur")||"180";document.querySelectorAll("input[name=dur]").forEach(r=>r.checked=r.value===d);$("#apiStatus").style.display="none";$("#apiModal").classList.add("open")};
+$("#useDemo").onclick=()=>{store("ytkey");DATA=enrich(makeDemo());$("#apiModal").classList.remove("open");render();toast("데모 데이터로 전환했습니다")};
+$("#apiLoad").onclick=async()=>{
+  const key=$("#apiKey").value.trim(),dur=document.querySelector("input[name=dur]:checked").value,st=$("#apiStatus");
+  if(!key){st.style.display="block";st.textContent="API 키를 입력해주세요.";return}
+  st.style.display="block";$("#apiLoad").disabled=true;
+  try{
+    const d=await loadYouTube(key,+dur,m=>st.textContent=m);
+    if(!d.vids.length)throw new Error("조건에 맞는 영상이 없습니다. 영상 길이 기준을 늘려보세요.");
+    store("ytkey",key);store("maxdur",dur);DATA=enrich(d);S.date="today";
+    // 실데이터는 최근 업로드가 적을 수 있어 가장 영상이 많은 날짜로 이동
+    const cnt={};DATA.vids.forEach(v=>cnt[dayKey(v.uploaded)]=(cnt[dayKey(v.uploaded)]||0)+1);
+    const keys=dateChips().map(c=>c.key);const best=keys.sort((a,b)=>(cnt[b]||0)-(cnt[a]||0))[0];
+    if(best&&best!==dayKey(DATA.collected)&&cnt[best])S.date=best;
+    $("#apiModal").classList.remove("open");render();toast(`영상 ${d.vids.length}개를 불러왔습니다`);
+  }catch(err){st.textContent="불러오기 실패: "+err.message}
+  finally{$("#apiLoad").disabled=false}
+};
+
+/* 시작 */
+(async()=>{
+  const key=load("ytkey");
+  DATA=enrich(makeDemo());
+  if(vidsFor(dayKey(DATA.collected),0).length<15){const y=new Date(DATA.collected);y.setDate(y.getDate()-1);S.date=dayKey(y)}
+  render();
+  if(key){try{const d=await loadYouTube(key,+(load("maxdur")||180),()=>{});if(d.vids.length){DATA=enrich(d);render();toast("YouTube 실데이터를 불러왔습니다")}}catch(e){toast("실데이터 불러오기 실패 — 데모 데이터로 표시합니다")}}
+})();
+</script>
+</body>
+</html>
