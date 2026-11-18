@@ -32,6 +32,8 @@ nav a.on{color:var(--text);font-weight:700;border-color:var(--red)}
 .hbtn{display:flex;gap:8px;align-items:center}
 .btn{border:1px solid var(--line);background:transparent;color:var(--text);padding:7px 14px;border-radius:8px;font-weight:600;font-size:13px}
 .btn.red{background:var(--red2);border-color:var(--red2);color:#fff}
+.kobtn{color:var(--sub)}
+.kobtn.on{background:var(--red2);border-color:var(--red2);color:#fff}
 .icon{width:36px;height:36px;padding:0;display:grid;place-items:center;font-size:16px}
 .eyebrow{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:13px;font-weight:500;margin-top:40px}
 .eyebrow:before{content:"";width:24px;height:1px;background:var(--sub)}
@@ -183,7 +185,7 @@ svg text{fill:var(--sub);font-size:11px}
   .wrap{padding:0 16px}.grid2{grid-template-columns:1fr}.vgrid{grid-template-columns:1fr 1fr}.cgrid,.rgrid{grid-template-columns:1fr}
   .hdr{gap:12px}.logo span{display:none}.peaks{grid-template-columns:1fr 1fr}.peaks div:nth-child(3){border-left:0}
   .peaks div:nth-child(n+3){border-top:1px solid var(--line)}.opts{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr}
-  h1{font-size:26px}.hbtn .btn:not(.icon){display:none}
+  h1{font-size:26px}.hbtn .btn:not(.icon):not(.kobtn){display:none}
 }
 </style>
 </head>
@@ -199,6 +201,7 @@ svg text{fill:var(--sub);font-size:11px}
       <a href="#ranking" data-p="ranking">랭킹</a>
     </nav>
     <div class="hbtn">
+      <button class="btn kobtn" id="koBtn">🇰🇷 한국어만</button>
       <button class="btn icon" id="themeBtn" title="테마 전환">☀</button>
       <button class="btn" id="apiBtn">데이터 설정</button>
     </div>
@@ -438,8 +441,13 @@ function dateChips(){
   }
   return out;
 }
+// 한국어만 보기: 제목이나 채널명에 한글이 있는 영상만 (켜짐이 기본값)
+let KO_ONLY=load("koOnly")!=="0";
+const isKo=v=>/[가-힣]/.test(v.title+" "+v.channel);
+const V=()=>KO_ONLY?DATA.vids.filter(isKo):DATA.vids;
+function setKo(on){KO_ONLY=on;store("koOnly",on?"1":"0");const b=$("#koBtn");b.classList.toggle("on",on);b.title=on?"한국어 영상만 보는 중 (누르면 전체 보기)":"전체 언어 보는 중 (누르면 한국어만)"}
 function vidsFor(dateKey,cat){
-  return DATA.vids.filter(v=>(!dateKey||dayKey(v.uploaded)===dateKey)&&matchCat(v,cat));
+  return V().filter(v=>(!dateKey||dayKey(v.uploaded)===dateKey)&&matchCat(v,cat));
 }
 function currentDateKey(){return S.date==="today"?dayKey(DATA.collected):S.date}
 
@@ -554,7 +562,7 @@ const CSORT=[["hot","⚡ 급상승 평균"],["ratio","구독자 대비 조회수
 function channelAgg(days,cat){
   const now=DATA.collected,from=new Date(now);from.setHours(0,0,0,0);from.setDate(from.getDate()-(days-1));
   const g={};
-  DATA.vids.filter(v=>v.uploaded>=from&&matchCat(v,cat)).forEach(v=>{(g[v.channelId]=g[v.channelId]||[]).push(v)});
+  V().filter(v=>v.uploaded>=from&&matchCat(v,cat)).forEach(v=>{(g[v.channelId]=g[v.channelId]||[]).push(v)});
   return Object.entries(g).map(([id,vs])=>{
     const c=DATA.cmap[id]||{id,name:vs[0].channel,subs:0,hue:hash(id)%360,emo:"📺",cat:vs[0].cat};
     const avg=k=>vs.reduce((a,v)=>a+v[k],0)/vs.length;
@@ -582,7 +590,7 @@ function vidThumbLink(v){
   return href?`<a class="tlink" href="${href}" target="_blank" rel="noopener" title="${esc(v.title)}">${inner}</a>`:`<div class="tlink" title="${esc(v.title)}">${inner}</div>`;
 }
 function openChannel(id){
-  const all=DATA.vids.filter(v=>v.channelId===id).sort((a,b)=>b.hot-a.hot);if(!all.length)return;
+  const all=V().filter(v=>v.channelId===id).sort((a,b)=>b.hot-a.hot);if(!all.length)return;
   const c=DATA.cmap[id]||{id,name:all[0].channel,subs:0,hue:hash(id)%360,emo:"📺",cat:all[0].cat};
   const sum=k=>all.reduce((a,v)=>a+v[k],0),href=ytChannel(id);
   $("#chTitle").textContent=c.name;
@@ -619,7 +627,7 @@ function applyF(list){
 }
 const ALGO=["매우 낮음","낮음","보통","높음","매우 높음"];
 function pageSearch(){
-  const f=S.f;let list=applyF(DATA.vids.slice());
+  const f=S.f;let list=applyF(V().slice());
   const sk={basic:"hot",subs:"subs",views:"views",date:"uploaded"}[f.sort];list.sort((a,b)=>b[sk]-a[sk]);
   const active=[f.cat&&catName(f.cat),f.period&&`최근 ${f.period}일`,f.algo.length&&`알고리즘 ${f.algo.map(a=>ALGO[a-1]).join("·")}`,
     !f.views.includes("all")&&"조회수 구간",(f.vmin||f.vmax)&&"조회수 직접입력",f.type!=="all"&&(f.type==="ad"?"광고 영상":"일반 영상"),
@@ -672,10 +680,10 @@ function rankBox(id,title,items){
 function pageRanking(){
   const av=c=>`<div class="av" style="background:hsl(${c.hue} 50% 30%)">${c.thumb?`<img src="${c.thumb}" style="width:100%;height:100%;border-radius:50%" referrerpolicy="no-referrer">`:(c.emo||"📺")}</div>`;
   const vav=v=>`<div class="av" style="border-radius:6px;background:hsl(${v.hue} 50% 30%)">${v.thumb?`<img src="${v.thumb}" style="width:100%;height:100%;border-radius:6px;object-fit:cover" referrerpolicy="no-referrer">`:(catById[v.cat]||{emo:"🎞️"}).emo}</div>`;
-  const recent=days=>{const f=new Date(DATA.collected);f.setHours(0,0,0,0);f.setDate(f.getDate()-(days-1));return DATA.vids.filter(v=>v.uploaded>=f)};
+  const recent=days=>{const f=new Date(DATA.collected);f.setHours(0,0,0,0);f.setDate(f.getDate()-(days-1));return V().filter(v=>v.uploaded>=f)};
   const chRank=(days,key)=>{const cur=channelAgg(days,0).sort((a,b)=>b[key]-a[key]);
     const prevFrom=new Date(DATA.collected);prevFrom.setDate(prevFrom.getDate()-days*2);
-    const prev={};DATA.vids.filter(v=>v.uploaded>=prevFrom&&(DATA.collected-v.uploaded)/864e5>=days).forEach(v=>prev[v.channelId]=(prev[v.channelId]||0)+v[key]);
+    const prev={};V().filter(v=>v.uploaded>=prevFrom&&(DATA.collected-v.uploaded)/864e5>=days).forEach(v=>prev[v.channelId]=(prev[v.channelId]||0)+v[key]);
     const pr=Object.entries(prev).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
     return cur.map((x,i)=>({x,chg:pr.indexOf(x.c.id)<0?undefined:pr.indexOf(x.c.id)-i}))};
   return head("한눈에 보기","랭킹",["일간·주간 기준으로 채널과 영상 순위를 모았습니다. ▲▼는 직전 기간 대비 순위 변화입니다."],collectedHTML())+
@@ -741,6 +749,10 @@ function setTheme(t){document.documentElement.dataset.theme=t;$("#themeBtn").tex
 setTheme(load("theme")||"dark");
 $("#themeBtn").onclick=()=>{setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");drawChart()};
 
+/* 한국어만 */
+setKo(KO_ONLY);
+$("#koBtn").onclick=()=>{setKo(!KO_ONLY);render();toast(KO_ONLY?"한국어 영상만 보여드려요":"모든 언어의 영상을 보여드려요")};
+
 /* 데이터 설정 */
 $("#apiBtn").onclick=()=>{$("#apiKey").value=load("ytkey")||"";const d=load("maxdur")||"180";document.querySelectorAll("input[name=dur]").forEach(r=>r.checked=r.value===d);$("#apiStatus").style.display="none";$("#apiModal").classList.add("open")};
 $("#useDemo").onclick=()=>{store("ytkey");store(CACHE_KEY);DATA=enrich(makeDemo());$("#apiModal").classList.remove("open");render();toast("데모 데이터로 전환했습니다")};
@@ -762,16 +774,18 @@ $("#apiLoad").onclick=async()=>{
 };
 
 /* 시작 */
+// 오늘 영상이 너무 적으면(새벽 등) 어제를 기본으로 보여줌
+function pickDate(){S.date="today";if(vidsFor(dayKey(DATA.collected),0).length<15){const y=new Date(DATA.collected);y.setDate(y.getDate()-1);S.date=dayKey(y)}}
 (async()=>{
   const key=load("ytkey");
   DATA=enrich(makeDemo());
-  if(vidsFor(dayKey(DATA.collected),0).length<15){const y=new Date(DATA.collected);y.setDate(y.getDate()-1);S.date=dayKey(y)}
+  pickDate();
   render();
   if(key){
     const c=readCache();
-    if(c&&Date.now()-c.collected<CACHE_MS&&c.vids.length){DATA=enrich(c);render();toast("저장해둔 실데이터를 보여드려요 (1시간마다 새로 불러옴)");return}
-    try{const d=await loadYouTube(key,+(load("maxdur")||180),()=>{});if(d.vids.length){saveCache(d);DATA=enrich(d);render();toast("YouTube 실데이터를 불러왔습니다")}}
-    catch(e){if(c&&c.vids.length){DATA=enrich(c);render();toast("새로 불러오기 실패 — 마지막으로 저장한 실데이터를 보여드려요")}else toast("실데이터 불러오기 실패: "+e.message)}
+    if(c&&Date.now()-c.collected<CACHE_MS&&c.vids.length){DATA=enrich(c);pickDate();render();toast("저장해둔 실데이터를 보여드려요 (1시간마다 새로 불러옴)");return}
+    try{const d=await loadYouTube(key,+(load("maxdur")||180),()=>{});if(d.vids.length){saveCache(d);DATA=enrich(d);pickDate();render();toast("YouTube 실데이터를 불러왔습니다")}}
+    catch(e){if(c&&c.vids.length){DATA=enrich(c);pickDate();render();toast("새로 불러오기 실패 — 마지막으로 저장한 실데이터를 보여드려요")}else toast("실데이터 불러오기 실패: "+e.message)}
   }
 })();
 </script>
