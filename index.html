@@ -172,6 +172,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .linkbtn{background:none;border:0;color:var(--text);text-decoration:underline;font-weight:700}
 .note{background:var(--panel2);border-radius:8px;padding:10px 12px;color:var(--sub);font-size:12px;margin-top:10px}
 .pill-live{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+button.pill-live{background:transparent;color:var(--text);font:inherit;font-size:12px;cursor:pointer}
+button.pill-live:hover{border-color:var(--red)}
 .pill-live i{width:7px;height:7px;border-radius:50%;background:var(--yellow)}
 .pill-live.live i{background:var(--green)}
 .empty-state{padding:40px;text-align:center;color:var(--sub)}
@@ -183,9 +185,16 @@ svg text{fill:var(--sub);font-size:11px}
 @media (max-width:1000px){.vgrid{grid-template-columns:repeat(3,1fr)}.cgrid,.rgrid{grid-template-columns:1fr 1fr}}
 @media (max-width:760px){
   .wrap{padding:0 16px}.grid2{grid-template-columns:1fr}.vgrid{grid-template-columns:1fr 1fr}.cgrid,.rgrid{grid-template-columns:1fr}
-  .hdr{gap:12px}.logo span{display:none}.peaks{grid-template-columns:1fr 1fr}.peaks div:nth-child(3){border-left:0}
+  .hdr{flex-wrap:wrap;height:auto;gap:0 8px;padding-top:10px}
+  .hbtn{margin-left:auto}
+  nav{order:3;flex-basis:100%;margin:0 -16px;padding:0 8px;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav a{padding:12px 10px}
+  #apiBtn{width:36px;height:36px;padding:0;font-size:16px}#apiBtn .lbl{display:none}
+  .collected{text-align:left}
+  .peaks{grid-template-columns:1fr 1fr}.peaks div:nth-child(3){border-left:0}
   .peaks div:nth-child(n+3){border-top:1px solid var(--line)}.opts{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr}
-  h1{font-size:26px}.hbtn .btn:not(.icon):not(.kobtn){display:none}
+  h1{font-size:26px}
 }
 </style>
 </head>
@@ -203,7 +212,7 @@ svg text{fill:var(--sub);font-size:11px}
     <div class="hbtn">
       <button class="btn kobtn" id="koBtn">🇰🇷 한국어만</button>
       <button class="btn icon" id="themeBtn" title="테마 전환">☀</button>
-      <button class="btn" id="apiBtn">데이터 설정</button>
+      <button class="btn" id="apiBtn" title="데이터 설정">⚙<span class="lbl"> 데이터 설정</span></button>
     </div>
   </div>
 </header>
@@ -472,7 +481,7 @@ function head(eyebrow,title,lines,right=""){
   return `<div class="eyebrow">${eyebrow}</div><div class="titlerow"><div><h1>${title}</h1>${lines.map(l=>`<p class="desc">${l}</p>`).join("")}</div>${right}</div>`;
 }
 const HOTDESC=`<span class="bolt">⚡</span> <b>급상승 수치</b>는 지금 얼마나 빠르게 반응을 얻고 있는지를 나타냅니다. 수치가 높을수록 지금 가장 빠르게 퍼지는 영상입니다.`;
-function collectedHTML(){const d=DATA.collected;return `<div class="collected"><span class="pill-live ${DATA.source==="youtube"?"live":""}"><i></i>${DATA.source==="youtube"?"YouTube 실데이터":"데모 데이터"}</span><div style="margin-top:6px">⏱ 수집 시간</div><strong>${d.getMonth()+1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}</strong></div>`}
+function collectedHTML(){const d=DATA.collected;return `<div class="collected">${DATA.source==="youtube"?`<span class="pill-live live"><i></i>YouTube 실데이터</span>`:`<button class="pill-live" id="demoPill" title="실제 데이터 연결하기"><i></i>데모 데이터 · 실데이터 연결 ›</button>`}<div style="margin-top:6px">⏱ 수집 시간</div><strong>${d.getMonth()+1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}</strong></div>`}
 
 /* ============ 페이지: 영상 분석 ============ */
 function pageAnalysis(){
@@ -735,6 +744,7 @@ document.addEventListener("change",e=>{
     else if(e.target.checked)all.checked=false}
 });
 document.addEventListener("click",e=>{
+  if(e.target.closest("#demoPill")){$("#apiBtn").click();return}
   if(e.target.closest("a.tlink"))return; // 썸네일은 유튜브로 바로 이동
   const card=e.target.closest(".ccard[data-ch]");if(card)openChannel(card.dataset.ch);
 });
