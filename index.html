@@ -326,7 +326,7 @@ function makeDemo(){
       const cat=r()<.7?ch.cat:CATS[Math.floor(r()*CATS.length)].id;
       const list=r()<.18?DEMO_SPECIAL[Math.floor(r()*DEMO_SPECIAL.length)]:TOPICS[cat];const title=list[Math.floor(r()*list.length)]+(r()<.35?" ㄷㄷ":r()<.3?" (실화)":"");
       const up=new Date(base);up.setHours(pickHour(),Math.floor(r()*60));
-      if(up>now)up.setTime(now.getTime()-r()*3600e3*3);
+      if(up>now)continue; // 아직 오지 않은 시간의 영상은 만들지 않음
       const views=Math.round(Math.exp(9+r()*6.3));
       vids.push({id:"v"+d+"_"+i,title,channelId:ch.id,channel:ch.name,cat,views,
         likes:Math.round(views*(.008+r()*.03)),comments:Math.round(views*(.0003+r()*.0025)),
