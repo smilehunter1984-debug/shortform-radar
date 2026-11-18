@@ -32,8 +32,11 @@ nav a.on{color:var(--text);font-weight:700;border-color:var(--red)}
 .hbtn{display:flex;gap:8px;align-items:center}
 .btn{border:1px solid var(--line);background:transparent;color:var(--text);padding:7px 14px;border-radius:8px;font-weight:600;font-size:13px}
 .btn.red{background:var(--red2);border-color:var(--red2);color:#fff}
-.kobtn{color:var(--sub)}
-.kobtn.on{background:var(--red2);border-color:var(--red2);color:#fff}
+.viewopts{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:16px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13px;font-weight:600}
+.viewopts label{display:flex;align-items:center;gap:7px;cursor:pointer}
+.viewopts input{accent-color:var(--red);width:17px;height:17px}
+.viewopts small{color:var(--sub);font-weight:400}
+.tag.off{border-color:var(--blue);color:var(--blue)}
 .icon{width:36px;height:36px;padding:0;display:grid;place-items:center;font-size:16px}
 .eyebrow{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:13px;font-weight:500;margin-top:40px}
 .eyebrow:before{content:"";width:24px;height:1px;background:var(--sub)}
@@ -210,7 +213,6 @@ svg text{fill:var(--sub);font-size:11px}
       <a href="#ranking" data-p="ranking">랭킹</a>
     </nav>
     <div class="hbtn">
-      <button class="btn kobtn" id="koBtn">🇰🇷 한국어만</button>
       <button class="btn icon" id="themeBtn" title="테마 전환">☀</button>
       <button class="btn" id="apiBtn" title="데이터 설정">⚙<span class="lbl"> 데이터 설정</span></button>
     </div>
@@ -355,7 +357,7 @@ function apiErr(e){
   if(/referer|ipRefererBlocked|blocked/i.test(r+e.message))return "키에 걸어둔 사용 제한 때문에 막혔어요. 키 설정에서 '애플리케이션 제한사항'을 '없음'으로 바꿔주세요.";
   return e.message;
 }
-const CACHE_KEY="ytcache3",CACHE_MS=3600e3;
+const CACHE_KEY="ytcache4",CACHE_MS=3600e3;
 function saveCache(d){try{localStorage.setItem(CACHE_KEY,JSON.stringify({collected:d.collected,channels:d.channels,vids:d.vids.map(v=>({...v,hours:undefined,hot:undefined,algo:undefined,subs:undefined}))}))}catch(e){}}
 function readCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY));if(!c)return null;
   c.collected=new Date(c.collected);c.vids.forEach(v=>v.uploaded=new Date(v.uploaded));c.source="youtube";return c}catch(e){return null}}
@@ -404,7 +406,7 @@ async function loadYouTube(key,maxDur,status){
   for(let i=0;i<chIds.length;i+=50){
     const j=await api("channels",{part:"snippet,statistics",id:chIds.slice(i,i+50).join(",")});
     for(const c of j.items||[])channels.push({id:c.id,name:c.snippet.title,subs:+c.statistics.subscriberCount||0,
-      thumb:c.snippet.thumbnails.default.url,hue:hash(c.id)%360,emo:"📺",cat:0});
+      thumb:c.snippet.thumbnails.default.url,hue:hash(c.id)%360,emo:"📺",cat:0,desc:(c.snippet.description||"").slice(0,300)});
   }
   const cmap=Object.fromEntries(channels.map(c=>[c.id,c]));
   vids.forEach(v=>{const c=cmap[v.channelId];if(c&&!c.cat)c.cat=v.cat});
@@ -429,6 +431,8 @@ function enrich(data){
     v.tags={};SPECIAL.forEach(s=>{if(s.re.test(text)||(s.desc&&s.desc.test(desc)))v.tags[s.id]=1});
     if(v.isAI)v.tags.ai=1; else if(v.tags.ai)v.isAI=true;
     if(!v.isAd&&/유료 ?광고|#광고|협찬|파트너스/i.test(text+" "+desc))v.isAd=true;
+    // 방송사 저작권 문구(ⓒ SBS, 무단 전재 및 재배포 금지 등)가 있으면 방송사 영상
+    v.bcast=/ⓒ|copyright|저작권|무단\s?전재/i.test(desc)&&BROADCASTER.test(desc)&&!/저작권자의 요청|비평|리뷰 목적|fair use|공정 이용/i.test(desc);
   }
   const hs=data.vids.map(v=>v.hot).sort((a,b)=>a-b);
   const q=p=>hs[Math.floor(p*(hs.length-1))]||0;
@@ -453,8 +457,31 @@ function dateChips(){
 // 한국어만 보기: 제목이나 채널명에 한글이 있는 영상만 (켜짐이 기본값)
 let KO_ONLY=load("koOnly")!=="0";
 const isKo=v=>/[가-힣]/.test(v.title+" "+v.channel);
-const V=()=>KO_ONLY?DATA.vids.filter(isKo):DATA.vids;
-function setKo(on){KO_ONLY=on;store("koOnly",on?"1":"0");const b=$("#koBtn");b.classList.toggle("on",on);b.title=on?"한국어 영상만 보는 중 (누르면 전체 보기)":"전체 언어 보는 중 (누르면 한국어만)"}
+// 공식 채널(방송사·TV 프로그램·언론사·연예기획사) 판단
+let NO_OFFICIAL=load("noOfficial")==="1";
+const OFFICIAL_NAME=/(^|[^a-z])(mbc|kbs|sbs|ebs|jtbc|ytn|tvn|mbn|mnet|ocn|tbs|obs|cbs|bbc|cnn|nhk)([^a-z]|$)|뉴스|news|방송|채널\s?a|channel\s?a|tv\s?조선|tv\s?chosun|연합|일보|신문|뉴시스|머니투데이|헤럴드|한겨레|공식|official|엔터테인먼트|entertainment|hybe|하이브|smtown|jyp|yg\s?ent|1thek|스브스|엠뚜루마뚜루|오분순삭|디글|diggle|샾잉|비디오머그|엠빅|크랩|채널\s?십오야|문명특급|스튜디오\s?와플|kbs\s?entertain|sbs\s?catch|sbs\s?story|enter나인|every1|빠더너스|달라스튜디오|딩고|dingo|studio\s?choom|stone\s?music|kakao\s?entertainment|starship|play\s?list/i;
+// 방송사·기획사 이름 (채널 소개·저작권 문구에서 함께 확인)
+const BROADCASTER=/(^|[^a-z])(mbc|kbs|sbs|ebs|jtbc|tvn|mnet|mbn|ytn|ocn|cj\s?enm)([^a-z]|$)|채널\s?a|tv\s?조선|연합뉴스|뉴시스|방송사|방송국|broadcast|network|엔터테인먼트|entertainment|레이블|labels?([^a-z]|$)/i;
+// 채널 소개: '공식/official'과 방송사·기획사 이름이 함께 있어야 공식 채널로 봄 (개인 크리에이터의 'Official Channel' 문구는 제외)
+const OFFICIAL_DESC={test:s=>/공식|official/i.test(s)&&BROADCASTER.test(s)};
+const OV_KEY="officialOv";
+let OFF_OV={};try{OFF_OV=JSON.parse(localStorage.getItem(OV_KEY))||{}}catch(e){}
+function chOfficialAuto(id){
+  const c=DATA.cmap[id]||{},vs=DATA.vids.filter(v=>v.channelId===id);
+  if(OFFICIAL_NAME.test(c.name||(vs[0]&&vs[0].channel)||""))return "이름";
+  if(c.desc&&OFFICIAL_DESC.test(c.desc))return "채널 소개";
+  if(vs.some(v=>v.bcast))return "영상 저작권 표시";
+  return "";
+}
+const isOfficial=id=>id in OFF_OV?OFF_OV[id]:!!chOfficialAuto(id);
+function markOfficial(id,on){const auto=!!chOfficialAuto(id);if(on===auto)delete OFF_OV[id];else OFF_OV[id]=on;store(OV_KEY,JSON.stringify(OFF_OV));DATA.offCache=null}
+function officialSet(){if(!DATA.offCache){const s=new Set();new Set(DATA.vids.map(v=>v.channelId)).forEach(id=>{if(isOfficial(id))s.add(id)});DATA.offCache=s}return DATA.offCache}
+const V=()=>{let a=DATA.vids;if(KO_ONLY)a=a.filter(isKo);if(NO_OFFICIAL){const s=officialSet();a=a.filter(v=>!s.has(v.channelId))}return a};
+function viewOpts(){
+  const n=officialSet().size;
+  return `<div class="viewopts"><label><input type="checkbox" id="optKo" ${KO_ONLY?"checked":""}>🇰🇷 한국어 영상만</label>
+  <label><input type="checkbox" id="optOff" ${NO_OFFICIAL?"checked":""}>🏢 공식 채널 제외 <small>방송사·TV 프로그램·언론사·기획사 ${n}곳</small></label></div>`;
+}
 function vidsFor(dateKey,cat){
   return V().filter(v=>(!dateKey||dayKey(v.uploaded)===dateKey)&&matchCat(v,cat));
 }
@@ -478,7 +505,7 @@ function avatarHTML(c,size=56,rank){
   return `<div class="avatar" style="${st}">${c.thumb?`<img src="${c.thumb}" style="width:100%;height:100%;border-radius:50%" referrerpolicy="no-referrer">`:(c.emo||"📺")}${rank?`<div class="rank">${rank}</div>`:""}</div>`;
 }
 function head(eyebrow,title,lines,right=""){
-  return `<div class="eyebrow">${eyebrow}</div><div class="titlerow"><div><h1>${title}</h1>${lines.map(l=>`<p class="desc">${l}</p>`).join("")}</div>${right}</div>`;
+  return `<div class="eyebrow">${eyebrow}</div><div class="titlerow"><div><h1>${title}</h1>${lines.map(l=>`<p class="desc">${l}</p>`).join("")}</div>${right}</div>${viewOpts()}`;
 }
 const HOTDESC=`<span class="bolt">⚡</span> <b>급상승 수치</b>는 지금 얼마나 빠르게 반응을 얻고 있는지를 나타냅니다. 수치가 높을수록 지금 가장 빠르게 퍼지는 영상입니다.`;
 function collectedHTML(){const d=DATA.collected;return `<div class="collected">${DATA.source==="youtube"?`<span class="pill-live live"><i></i>YouTube 실데이터</span>`:`<button class="pill-live" id="demoPill" title="실제 데이터 연결하기"><i></i>데모 데이터 · 실데이터 연결 ›</button>`}<div style="margin-top:6px">⏱ 수집 시간</div><strong>${d.getMonth()+1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}</strong></div>`}
@@ -585,7 +612,7 @@ function pageChannels(){
   ${chipsHTML(CSORT.map(([k,l])=>({key:k,label:l})),S.csort,"csort")}</div>
   ${list.length?`<div class="cgrid">${list.map((x,i)=>`<div class="ccard" data-ch="${esc(x.c.id)}" title="채널 자세히 보기">
     <div class="chead">${avatarHTML(x.c,56,i+1)}<div><div class="cname">${esc(x.c.name)}</div>
-    <span class="tag">${(catById[x.c.cat]||{name:"기타"}).name}</span>${specTags(x.vs)}<span style="color:var(--sub);font-size:12px">구독자 <b style="color:var(--text)">${short(x.c.subs)}명</b></span></div></div>
+    <span class="tag">${(catById[x.c.cat]||{name:"기타"}).name}</span>${isOfficial(x.c.id)?`<span class="tag off">🏢 공식</span>`:""}${specTags(x.vs)}<span style="color:var(--sub);font-size:12px">구독자 <b style="color:var(--text)">${short(x.c.subs)}명</b></span></div></div>
     <div class="kpis"><div class="hot"><small>급상승 평균 ⚡</small><b>${fmt(x.hot)}</b></div><div><small>구독자 대비</small><b>${x.ratio>=1?fmt(x.ratio)+"배":(x.ratio*100).toFixed(0)+"%"}</b></div><div><small>급상승 영상</small><b>${x.count}개</b></div></div>
     <div class="avgline"><span>영상당 평균</span></div>
     <div class="kpis plain"><div><small>👁 조회수</small><b>${fmt(x.views)}</b></div><div><small>👍 좋아요</small><b>${fmt(x.likes)}</b></div><div><small>💬 댓글</small><b>${fmt(x.comments)}</b></div></div>
@@ -599,13 +626,17 @@ function vidThumbLink(v){
   return href?`<a class="tlink" href="${href}" target="_blank" rel="noopener" title="${esc(v.title)}">${inner}</a>`:`<div class="tlink" title="${esc(v.title)}">${inner}</div>`;
 }
 function openChannel(id){
-  const all=V().filter(v=>v.channelId===id).sort((a,b)=>b.hot-a.hot);if(!all.length)return;
+  const all=DATA.vids.filter(v=>v.channelId===id).sort((a,b)=>b.hot-a.hot);if(!all.length)return;
   const c=DATA.cmap[id]||{id,name:all[0].channel,subs:0,hue:hash(id)%360,emo:"📺",cat:all[0].cat};
   const sum=k=>all.reduce((a,v)=>a+v[k],0),href=ytChannel(id);
+  const off=isOfficial(id),why=id in OFF_OV?"직접 표시함":chOfficialAuto(id);
   $("#chTitle").textContent=c.name;
   $("#chBody").innerHTML=`<div class="chead" style="margin-top:8px">${avatarHTML(c,64)}<div>
-      <div class="cname">${esc(c.name)}</div><span class="tag">${(catById[c.cat]||{name:"기타"}).name}</span>${specTags(all)}
+      <div class="cname">${esc(c.name)}</div><span class="tag">${(catById[c.cat]||{name:"기타"}).name}</span>${off?`<span class="tag off">🏢 공식 채널</span>`:""}${specTags(all)}
       <div style="color:var(--sub);font-size:13px;margin-top:4px">구독자 <b style="color:var(--text)">${fmt(c.subs)}명</b></div></div></div>
+    <div class="note" style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px">
+      <span>${off?`🏢 <b>공식 채널</b>로 분류됨 (근거: ${why})`:"일반 크리에이터 채널로 분류됨"}</span>
+      <button class="btn" data-markoff="${esc(id)}">${off?"일반 채널로 바꾸기":"공식 채널로 표시"}</button></div>
     <div class="kpis"><div class="hot"><small>최고 급상승 ⚡</small><b>${fmt(all[0].hot)}</b></div><div><small>수집된 영상</small><b>${all.length}개</b></div><div><small>총 조회수</small><b>${short(sum("views"))}</b></div></div>
     <h4>이 채널의 영상 (최근 7일, 급상승 순)</h4>
     ${all.map((v,i)=>{const h=ytVideo(v);return `<${h?`a href="${h}" target="_blank" rel="noopener"`:"div"} class="vrow chv">${thumbHTML(v,{rank:i+1})}<div class="vinfo">
@@ -760,8 +791,16 @@ setTheme(load("theme")||"dark");
 $("#themeBtn").onclick=()=>{setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");drawChart()};
 
 /* 한국어만 */
-setKo(KO_ONLY);
-$("#koBtn").onclick=()=>{setKo(!KO_ONLY);render();toast(KO_ONLY?"한국어 영상만 보여드려요":"모든 언어의 영상을 보여드려요")};
+document.addEventListener("change",e=>{
+  if(e.target.id==="optKo"){KO_ONLY=e.target.checked;store("koOnly",KO_ONLY?"1":"0");render();toast(KO_ONLY?"한국어 영상만 보여드려요":"모든 언어의 영상을 보여드려요")}
+  if(e.target.id==="optOff"){NO_OFFICIAL=e.target.checked;store("noOfficial",NO_OFFICIAL?"1":"0");render();toast(NO_OFFICIAL?"공식 채널을 빼고 보여드려요":"공식 채널도 함께 보여드려요")}
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-markoff]");if(!b)return;
+  const id=b.dataset.markoff,on=!isOfficial(id);markOfficial(id,on);
+  $("#chModal").classList.remove("open");render();
+  toast(on?"공식 채널로 표시했어요"+(NO_OFFICIAL?" (목록에서 빠집니다)":""):"일반 채널로 표시했어요");
+});
 
 /* 데이터 설정 */
 $("#apiBtn").onclick=()=>{$("#apiKey").value=load("ytkey")||"";const d=load("maxdur")||"180";document.querySelectorAll("input[name=dur]").forEach(r=>r.checked=r.value===d);$("#apiStatus").style.display="none";$("#apiModal").classList.add("open")};
