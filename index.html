@@ -215,7 +215,7 @@ svg text{fill:var(--sub);font-size:11px}
     <div class="mbody">
       <h4>YouTube Data API v3 키</h4>
       <input type="password" id="apiKey" placeholder="AIza... 로 시작하는 키">
-      <div class="note">키를 넣으면 한국(KR) 인기 영상 차트를 카테고리별로 불러와 분석합니다. 키는 이 브라우저(localStorage)에만 저장되고 YouTube 외에는 전송되지 않습니다.<br>키 발급: Google Cloud Console → API 및 서비스 → YouTube Data API v3 사용 설정 → 사용자 인증 정보 → API 키</div>
+      <div class="note">키를 넣으면 최근 7일간 한국에서 조회수가 높은 숏폼을 날짜별로 검색해 분석합니다. 한 번 불러오는 데 하루 무료 사용량(10,000)의 약 15%를 쓰며, 결과는 1시간 동안 저장해 두고 재사용합니다.<br>키는 이 브라우저에만 저장되고 YouTube 외에는 전송되지 않습니다.<br>키 발급: Google Cloud Console → API 및 서비스 → YouTube Data API v3 사용 설정 → 사용자 인증 정보 → API 키</div>
       <h4>영상 길이 기준 (숏폼으로 볼 최대 길이)</h4>
       <div class="opts" id="durOpts">
         <label><input type="radio" name="dur" value="60">60초 이하</label>
@@ -302,36 +302,61 @@ function makeDemo(){
 }
 
 /* ============ YouTube API 실데이터 ============ */
+function apiErr(e){
+  const r=(e.errors&&e.errors[0]&&e.errors[0].reason)||"";
+  if(/keyInvalid|API key not valid/i.test(r+e.message))return "API 키가 올바르지 않아요. 복사할 때 앞뒤가 잘리지 않았는지 확인해주세요.";
+  if(/quotaExceeded|dailyLimit/i.test(r))return "오늘 사용할 수 있는 양(할당량)을 다 썼어요. 내일 오후 4~5시(한국 시간)에 초기화됩니다.";
+  if(/accessNotConfigured|has not been used|disabled/i.test(r+e.message))return "YouTube Data API v3가 아직 '사용 설정'되지 않았어요. Google Cloud에서 사용 버튼을 눌러주세요(켠 뒤 몇 분 걸릴 수 있어요).";
+  if(/referer|ipRefererBlocked|blocked/i.test(r+e.message))return "키에 걸어둔 사용 제한 때문에 막혔어요. 키 설정에서 '애플리케이션 제한사항'을 '없음'으로 바꿔주세요.";
+  return e.message;
+}
+const CACHE_KEY="ytcache",CACHE_MS=3600e3;
+function saveCache(d){try{localStorage.setItem(CACHE_KEY,JSON.stringify({collected:d.collected,channels:d.channels,vids:d.vids.map(v=>({...v,hours:undefined,hot:undefined,algo:undefined,subs:undefined}))}))}catch(e){}}
+function readCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY));if(!c)return null;
+  c.collected=new Date(c.collected);c.vids.forEach(v=>v.uploaded=new Date(v.uploaded));c.source="youtube";return c}catch(e){return null}}
 function parseISODur(s){const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(s||"")||[];return(+m[1]||0)*3600+(+m[2]||0)*60+(+m[3]||0)}
+// 할당량(하루 10,000): 날짜별 검색 7일×2페이지=1,400 + 인기차트·상세·채널 수십 = 약 1,500/회
 async function loadYouTube(key,maxDur,status){
-  const vids=[],seen=new Set();
-  const api=(p,q)=>fetch(`https://www.googleapis.com/youtube/v3/${p}?${new URLSearchParams({...q,key})}`).then(async r=>{const j=await r.json();if(j.error)throw new Error(j.error.message);return j});
-  const targets=[null,...CATS.map(c=>c.id)];
-  for(const cid of targets){
-    status(`인기 영상 불러오는 중… ${cid?catById[cid].name:"전체"}`);
+  const vids=[],ids=new Set();
+  const api=(p,q)=>fetch(`https://www.googleapis.com/youtube/v3/${p}?${new URLSearchParams({...q,key})}`).then(async r=>{const j=await r.json();if(j.error)throw new Error(apiErr(j.error));return j});
+  const now=new Date();
+  // 1) 최근 7일, 날짜별로 숏폼(4분 미만)을 조회수 순으로 검색
+  for(let d=0;d<7;d++){
+    const start=new Date(now);start.setHours(0,0,0,0);start.setDate(start.getDate()-d);
+    const end=d===0?now:new Date(start.getTime()+864e5);
     let pageToken="";
-    for(let p=0;p<(cid?1:4);p++){
-      const q={part:"snippet,statistics,contentDetails",chart:"mostPopular",regionCode:"KR",maxResults:50};
-      if(cid)q.videoCategoryId=cid; if(pageToken)q.pageToken=pageToken;
-      let j;try{j=await api("videos",q)}catch(e){if(!cid)throw e;break}
-      for(const it of j.items||[]){
-        if(seen.has(it.id))continue;seen.add(it.id);
-        const dur=parseISODur(it.contentDetails.duration);
-        if(maxDur&&dur>maxDur)continue;
-        const st=it.statistics||{};
-        vids.push({id:it.id,title:it.snippet.title,channelId:it.snippet.channelId,channel:it.snippet.channelTitle,
-          cat:+it.snippet.categoryId,views:+st.viewCount||0,likes:+st.likeCount||0,comments:+st.commentCount||0,
-          duration:dur,uploaded:new Date(it.snippet.publishedAt),
-          thumb:(it.snippet.thumbnails.high||it.snippet.thumbnails.medium||it.snippet.thumbnails.default).url,
-          hue:hash(it.id)%360,isAd:false,isAI:!!(it.status&&it.status.containsSyntheticMedia)});
-      }
+    for(let p=0;p<2;p++){
+      status(`숏폼 검색 중… ${start.getMonth()+1}/${start.getDate()} (${d*2+p+1}/14)`);
+      const q={part:"id",type:"video",videoDuration:"short",order:"viewCount",regionCode:"KR",relevanceLanguage:"ko",
+        publishedAfter:start.toISOString(),publishedBefore:end.toISOString(),maxResults:50};
+      if(pageToken)q.pageToken=pageToken;
+      const j=await api("search",q);
+      (j.items||[]).forEach(it=>it.id&&it.id.videoId&&ids.add(it.id.videoId));
       pageToken=j.nextPageToken;if(!pageToken)break;
     }
   }
+  // 2) 한국 인기 차트도 함께 (최근 7일 업로드만 남음)
+  status("인기 차트 확인 중…");
+  try{const j=await api("videos",{part:"id",chart:"mostPopular",regionCode:"KR",maxResults:50});(j.items||[]).forEach(it=>ids.add(it.id))}catch(e){}
+  // 3) 영상 상세(조회수·좋아요·댓글·길이)
+  const list=[...ids],from=new Date(now);from.setHours(0,0,0,0);from.setDate(from.getDate()-6);
+  for(let i=0;i<list.length;i+=50){
+    status(`영상 정보 불러오는 중… ${Math.min(i+50,list.length)}/${list.length}`);
+    const j=await api("videos",{part:"snippet,statistics,contentDetails",id:list.slice(i,i+50).join(",")});
+    for(const it of j.items||[]){
+      const dur=parseISODur(it.contentDetails.duration),up=new Date(it.snippet.publishedAt);
+      if(maxDur&&dur>maxDur)continue;if(up<from)continue;
+      const st=it.statistics||{},th=it.snippet.thumbnails||{};
+      vids.push({id:it.id,title:it.snippet.title,channelId:it.snippet.channelId,channel:it.snippet.channelTitle,
+        cat:+it.snippet.categoryId,views:+st.viewCount||0,likes:+st.likeCount||0,comments:+st.commentCount||0,
+        duration:dur,uploaded:up,thumb:(th.high||th.medium||th.default||{}).url||null,
+        hue:hash(it.id)%360,isAd:false,isAI:false});
+    }
+  }
   status("채널 정보 불러오는 중…");
-  const ids=[...new Set(vids.map(v=>v.channelId))],channels=[];
-  for(let i=0;i<ids.length;i+=50){
-    const j=await api("channels",{part:"snippet,statistics",id:ids.slice(i,i+50).join(",")});
+  const chIds=[...new Set(vids.map(v=>v.channelId))],channels=[];
+  for(let i=0;i<chIds.length;i+=50){
+    const j=await api("channels",{part:"snippet,statistics",id:chIds.slice(i,i+50).join(",")});
     for(const c of j.items||[])channels.push({id:c.id,name:c.snippet.title,subs:+c.statistics.subscriberCount||0,
       thumb:c.snippet.thumbnails.default.url,hue:hash(c.id)%360,emo:"📺",cat:0});
   }
@@ -648,7 +673,7 @@ $("#themeBtn").onclick=()=>{setTheme(document.documentElement.dataset.theme==="l
 
 /* 데이터 설정 */
 $("#apiBtn").onclick=()=>{$("#apiKey").value=load("ytkey")||"";const d=load("maxdur")||"180";document.querySelectorAll("input[name=dur]").forEach(r=>r.checked=r.value===d);$("#apiStatus").style.display="none";$("#apiModal").classList.add("open")};
-$("#useDemo").onclick=()=>{store("ytkey");DATA=enrich(makeDemo());$("#apiModal").classList.remove("open");render();toast("데모 데이터로 전환했습니다")};
+$("#useDemo").onclick=()=>{store("ytkey");store(CACHE_KEY);DATA=enrich(makeDemo());$("#apiModal").classList.remove("open");render();toast("데모 데이터로 전환했습니다")};
 $("#apiLoad").onclick=async()=>{
   const key=$("#apiKey").value.trim(),dur=document.querySelector("input[name=dur]:checked").value,st=$("#apiStatus");
   if(!key){st.style.display="block";st.textContent="API 키를 입력해주세요.";return}
@@ -656,7 +681,7 @@ $("#apiLoad").onclick=async()=>{
   try{
     const d=await loadYouTube(key,+dur,m=>st.textContent=m);
     if(!d.vids.length)throw new Error("조건에 맞는 영상이 없습니다. 영상 길이 기준을 늘려보세요.");
-    store("ytkey",key);store("maxdur",dur);DATA=enrich(d);S.date="today";
+    store("ytkey",key);store("maxdur",dur);saveCache(d);DATA=enrich(d);S.date="today";
     // 실데이터는 최근 업로드가 적을 수 있어 가장 영상이 많은 날짜로 이동
     const cnt={};DATA.vids.forEach(v=>cnt[dayKey(v.uploaded)]=(cnt[dayKey(v.uploaded)]||0)+1);
     const keys=dateChips().map(c=>c.key);const best=keys.sort((a,b)=>(cnt[b]||0)-(cnt[a]||0))[0];
@@ -672,7 +697,12 @@ $("#apiLoad").onclick=async()=>{
   DATA=enrich(makeDemo());
   if(vidsFor(dayKey(DATA.collected),0).length<15){const y=new Date(DATA.collected);y.setDate(y.getDate()-1);S.date=dayKey(y)}
   render();
-  if(key){try{const d=await loadYouTube(key,+(load("maxdur")||180),()=>{});if(d.vids.length){DATA=enrich(d);render();toast("YouTube 실데이터를 불러왔습니다")}}catch(e){toast("실데이터 불러오기 실패 — 데모 데이터로 표시합니다")}}
+  if(key){
+    const c=readCache();
+    if(c&&Date.now()-c.collected<CACHE_MS&&c.vids.length){DATA=enrich(c);render();toast("저장해둔 실데이터를 보여드려요 (1시간마다 새로 불러옴)");return}
+    try{const d=await loadYouTube(key,+(load("maxdur")||180),()=>{});if(d.vids.length){saveCache(d);DATA=enrich(d);render();toast("YouTube 실데이터를 불러왔습니다")}}
+    catch(e){if(c&&c.vids.length){DATA=enrich(c);render();toast("새로 불러오기 실패 — 마지막으로 저장한 실데이터를 보여드려요")}else toast("실데이터 불러오기 실패: "+e.message)}
+  }
 })();
 </script>
 </body>
