@@ -107,6 +107,16 @@ h1{font-size:32px;font-weight:900;margin:8px 0 14px;letter-spacing:-1px}
 .kpis.plain{background:transparent}
 .cthumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
 .cthumbs .thumb{aspect-ratio:9/14;width:100%}
+.ccard{cursor:pointer;transition:border-color .15s,transform .15s}
+.ccard:hover{border-color:var(--red);transform:translateY(-2px)}
+.cmore{text-align:right;color:var(--sub);font-size:12px;margin-top:10px}
+.ccard:hover .cmore{color:var(--red)}
+.tlink{display:block;border-radius:8px;overflow:hidden}
+.tlink:hover{outline:2px solid var(--red)}
+.tag.spec{border-color:var(--red);color:var(--red)}
+a.vrow.chv{color:inherit}
+a.vrow.chv:hover,div.vrow.chv:hover{border-color:var(--red)}
+a.vcard{display:block;color:inherit}
 .cthumbs .thumb .emo{font-size:24px}
 .cthumbs .empty{background:var(--panel2);border-radius:8px;aspect-ratio:9/14}
 .cthumbs .thumb .cap{font-size:11px}
@@ -227,6 +237,14 @@ svg text{fill:var(--sub);font-size:11px}
     <div class="mfoot"><button class="linkbtn" id="useDemo">데모 데이터로 보기</button><button class="btn red" id="apiLoad">실제 데이터 불러오기</button></div>
   </div>
 </div>
+<!-- 채널 상세 모달 -->
+<div class="modal" id="chModal">
+  <div class="mbox" style="width:min(640px,100%)">
+    <div class="mhead"><h2 id="chTitle">채널</h2><button class="btn icon" data-close>✕</button></div>
+    <div class="mbody" id="chBody"></div>
+    <div class="mfoot"><span class="cdesc" style="margin:0">영상을 누르면 유튜브에서 열려요</span><a class="btn red" id="chOpen" target="_blank" rel="noopener">유튜브 채널 열기 ↗</a></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -238,6 +256,16 @@ const CATS=[
   {id:27,name:"교육",emo:"📚"},{id:28,name:"IT/기술",emo:"💻"},{id:29,name:"사회",emo:"🤝"}
 ];
 const catById=Object.fromEntries(CATS.map(c=>[c.id,c]));
+// 유튜브에 없는 특별 카테고리: 제목·태그·설명의 단어로 분류
+const SPECIAL=[
+  {id:"ai",name:"AI영상",emo:"🤖",re:/(^|[^a-z])ai([^a-z]|$)|인공지능|챗\s?gpt|chatgpt|sora|veo\s?3|kling|midjourney|미드저니|runway|생성형|딥페이크|버추얼|가상 ?인간/i},
+  {id:"shop",name:"쇼핑쇼츠",emo:"🛍️",re:/쿠팡(?!\s?플레이)|파트너스|추천템|꿀템|하울|내돈내산|구매 ?링크|프로필 ?링크|최저가|다이소|올리브영|알리익스프레스|알리에서|테무|무신사|언박싱|unboxing|살림템|필수템|가성비템|공구|공동구매|유료 ?광고|#광고|협찬|할인 ?코드|쇼핑|사봤|써봤|구매했/i,
+   desc:/쿠팡 ?파트너스|파트너스 활동|구매 ?링크|제품 ?링크|유료 ?광고|협찬|할인 ?코드|link\.coupang|coupa\.ng|aliexpress|temu\.to|smartstore|스마트스토어/i},
+  {id:"person",name:"인물",emo:"🧑",re:/인물|위인|근황|의 정체|의 인생|인생 ?이야기|사연|대통령|회장님?|재벌|ceo|배우|연예인|가수|선수|감독|교수|만점자|천재|어린 ?시절|과거 ?사진|생애|자서전|일대기/i}
+];
+const specById=Object.fromEntries(SPECIAL.map(s=>[s.id,s]));
+const catName=c=>(specById[c]||catById[c]||{name:"기타"}).name;
+const matchCat=(v,c)=>!c||(specById[c]?!!(v.tags&&v.tags[c]):v.cat===c);
 const $=s=>document.querySelector(s);
 const fmt=n=>Math.round(n).toLocaleString("ko-KR");
 const short=n=>n>=1e8?(n/1e8).toFixed(1).replace(/\.0$/,"")+"억":n>=1e4?(n/1e4).toFixed(n>=1e5?0:1).replace(/\.0$/,"")+"만":fmt(n);
@@ -272,6 +300,11 @@ const TOPICS={
   29:["시민이 막아낸 사고","착한 가게 사장님","길에서 지갑 주웠을 때","어르신 도와준 학생","동네 실화 사연"]
 };
 const NAMEBASE=["정치-뉴스","대쪽신","박쌍덕","뫄쓩","민서율","아아한잔","오늘의냥","차밍카","겜돌이","하루한곡","여행가방","뷰티로그","공부왕","테크박사","썰푸는언니","웃참챌린지","동네소식","직캠맛집","축구신동","먹방요정","1분지식","드라이브인","리뷰왕김씨","냥이집사","자취왕","코디천재","시네필","뉴스한입","세상만사","게임하는형"];
+const DEMO_SPECIAL=[
+  ["AI로 만든 할머니 브이로그","Sora로 만든 고양이 영화","AI가 그린 조선시대 아이돌","인공지능이 부른 트로트","AI 가상인간 데뷔 무대"],
+  ["다이소 꿀템 5가지","올리브영 세일 추천템","자취 필수템 하울","쿠팡 최저가 살림템","내돈내산 겨울 패딩 언박싱"],
+  ["리트 만점자의 공부법","이 배우의 충격 근황","재벌 회장님의 하루","국가대표 선수의 어린 시절","전설적인 가수의 인생 이야기"]
+];
 function makeDemo(){
   const r=rng(20261118);
   const now=new Date();
@@ -288,7 +321,7 @@ function makeDemo(){
     for(let i=0;i<cnt;i++){
       const ch=channels[Math.floor(Math.pow(r(),1.4)*channels.length)];
       const cat=r()<.7?ch.cat:CATS[Math.floor(r()*CATS.length)].id;
-      const list=TOPICS[cat];const title=list[Math.floor(r()*list.length)]+(r()<.35?" ㄷㄷ":r()<.3?" (실화)":"");
+      const list=r()<.18?DEMO_SPECIAL[Math.floor(r()*DEMO_SPECIAL.length)]:TOPICS[cat];const title=list[Math.floor(r()*list.length)]+(r()<.35?" ㄷㄷ":r()<.3?" (실화)":"");
       const up=new Date(base);up.setHours(pickHour(),Math.floor(r()*60));
       if(up>now)up.setTime(now.getTime()-r()*3600e3*3);
       const views=Math.round(Math.exp(9+r()*6.3));
@@ -310,7 +343,7 @@ function apiErr(e){
   if(/referer|ipRefererBlocked|blocked/i.test(r+e.message))return "키에 걸어둔 사용 제한 때문에 막혔어요. 키 설정에서 '애플리케이션 제한사항'을 '없음'으로 바꿔주세요.";
   return e.message;
 }
-const CACHE_KEY="ytcache",CACHE_MS=3600e3;
+const CACHE_KEY="ytcache3",CACHE_MS=3600e3;
 function saveCache(d){try{localStorage.setItem(CACHE_KEY,JSON.stringify({collected:d.collected,channels:d.channels,vids:d.vids.map(v=>({...v,hours:undefined,hot:undefined,algo:undefined,subs:undefined}))}))}catch(e){}}
 function readCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY));if(!c)return null;
   c.collected=new Date(c.collected);c.vids.forEach(v=>v.uploaded=new Date(v.uploaded));c.source="youtube";return c}catch(e){return null}}
@@ -342,7 +375,7 @@ async function loadYouTube(key,maxDur,status){
   const list=[...ids],from=new Date(now);from.setHours(0,0,0,0);from.setDate(from.getDate()-6);
   for(let i=0;i<list.length;i+=50){
     status(`영상 정보 불러오는 중… ${Math.min(i+50,list.length)}/${list.length}`);
-    const j=await api("videos",{part:"snippet,statistics,contentDetails",id:list.slice(i,i+50).join(",")});
+    const j=await api("videos",{part:"snippet,statistics,contentDetails,status",id:list.slice(i,i+50).join(",")});
     for(const it of j.items||[]){
       const dur=parseISODur(it.contentDetails.duration),up=new Date(it.snippet.publishedAt);
       if(maxDur&&dur>maxDur)continue;if(up<from)continue;
@@ -350,7 +383,8 @@ async function loadYouTube(key,maxDur,status){
       vids.push({id:it.id,title:it.snippet.title,channelId:it.snippet.channelId,channel:it.snippet.channelTitle,
         cat:+it.snippet.categoryId,views:+st.viewCount||0,likes:+st.likeCount||0,comments:+st.commentCount||0,
         duration:dur,uploaded:up,thumb:(th.high||th.medium||th.default||{}).url||null,
-        hue:hash(it.id)%360,isAd:false,isAI:false});
+        hue:hash(it.id)%360,isAd:false,isAI:!!(it.status&&it.status.containsSyntheticMedia),
+        kw:(it.snippet.tags||[]).join(" ").slice(0,300)+"\u0001"+(it.snippet.description||"").slice(0,500)});
     }
   }
   status("채널 정보 불러오는 중…");
@@ -377,6 +411,12 @@ function enrich(data){
     v.hours=hrs;
     v.hot=Math.round(v.views*Math.pow(24/hrs,.55)*(1+eng*12));
     v.subs=(cmap[v.channelId]||{}).subs||0;
+    // 제목+태그로 판단, 설명란은 쇼핑의 확실한 신호(쿠팡 파트너스 등)만 사용
+    const kw=v.kw||"",cut=kw.indexOf("\u0001"),tagText=cut<0?"":kw.slice(0,cut),desc=cut<0?kw:kw.slice(cut+1);
+    const text=v.title+" "+tagText;
+    v.tags={};SPECIAL.forEach(s=>{if(s.re.test(text)||(s.desc&&s.desc.test(desc)))v.tags[s.id]=1});
+    if(v.isAI)v.tags.ai=1; else if(v.tags.ai)v.isAI=true;
+    if(!v.isAd&&/유료 ?광고|#광고|협찬|파트너스/i.test(text+" "+desc))v.isAd=true;
   }
   const hs=data.vids.map(v=>v.hot).sort((a,b)=>a-b);
   const q=p=>hs[Math.floor(p*(hs.length-1))]||0;
@@ -399,7 +439,7 @@ function dateChips(){
   return out;
 }
 function vidsFor(dateKey,cat){
-  return DATA.vids.filter(v=>(!dateKey||dayKey(v.uploaded)===dateKey)&&(!cat||v.cat===cat));
+  return DATA.vids.filter(v=>(!dateKey||dayKey(v.uploaded)===dateKey)&&matchCat(v,cat));
 }
 function currentDateKey(){return S.date==="today"?dayKey(DATA.collected):S.date}
 
@@ -413,7 +453,9 @@ function thumbHTML(v,{rank,big,chn}={}){
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function chipsHTML(items,cur,attr){return `<div class="chips">${items.map(i=>`<button class="chip ${String(i.key)===String(cur)?"on":""}" data-${attr}="${i.key}">${i.label}</button>`).join("")}</div>`}
-function catChips(){return chipsHTML([{key:0,label:"전체"},...CATS.map(c=>({key:c.id,label:c.name}))],S.cat,"cat")}
+function catChips(){return chipsHTML([{key:0,label:"전체"},...SPECIAL.map(s=>({key:s.id,label:s.emo+" "+s.name})),...CATS.map(c=>({key:c.id,label:c.name}))],S.cat,"cat")}
+const ytVideo=v=>DATA.source==="youtube"?`https://www.youtube.com/shorts/${v.id}`:"";
+const ytChannel=id=>DATA.source==="youtube"?`https://www.youtube.com/channel/${id}`:"";
 function avatarHTML(c,size=56,rank){
   const st=`width:${size}px;height:${size}px;font-size:${size*.45}px;background:hsl(${c.hue} 50% 30%)`;
   return `<div class="avatar" style="${st}">${c.thumb?`<img src="${c.thumb}" style="width:100%;height:100%;border-radius:50%" referrerpolicy="no-referrer">`:(c.emo||"📺")}${rank?`<div class="rank">${rank}</div>`:""}</div>`;
@@ -512,7 +554,7 @@ const CSORT=[["hot","⚡ 급상승 평균"],["ratio","구독자 대비 조회수
 function channelAgg(days,cat){
   const now=DATA.collected,from=new Date(now);from.setHours(0,0,0,0);from.setDate(from.getDate()-(days-1));
   const g={};
-  DATA.vids.filter(v=>v.uploaded>=from&&(!cat||v.cat===cat)).forEach(v=>{(g[v.channelId]=g[v.channelId]||[]).push(v)});
+  DATA.vids.filter(v=>v.uploaded>=from&&matchCat(v,cat)).forEach(v=>{(g[v.channelId]=g[v.channelId]||[]).push(v)});
   return Object.entries(g).map(([id,vs])=>{
     const c=DATA.cmap[id]||{id,name:vs[0].channel,subs:0,hue:hash(id)%360,emo:"📺",cat:vs[0].cat};
     const avg=k=>vs.reduce((a,v)=>a+v[k],0)/vs.length;
@@ -524,21 +566,45 @@ function pageChannels(){
   return head("급상승 순위","급상승 채널",["<b>구독자 대비</b>는 영상 1개당 평균 조회수를 구독자 수로 나눈 값입니다. 높을수록 구독자 규모에 비해 크게 퍼진 채널입니다.","조회수·좋아요·댓글은 선택한 기간에 급상승 순위에 든 영상 1개당 평균입니다."],collectedHTML())+
   `<div class="filters">${chipsHTML([{key:7,label:"최근 7일"},{key:5,label:"최근 5일"},{key:3,label:"최근 3일"},{key:1,label:"오늘"}],S.cperiod,"cperiod")}${catChips()}
   ${chipsHTML(CSORT.map(([k,l])=>({key:k,label:l})),S.csort,"csort")}</div>
-  ${list.length?`<div class="cgrid">${list.map((x,i)=>`<div class="ccard">
+  ${list.length?`<div class="cgrid">${list.map((x,i)=>`<div class="ccard" data-ch="${esc(x.c.id)}" title="채널 자세히 보기">
     <div class="chead">${avatarHTML(x.c,56,i+1)}<div><div class="cname">${esc(x.c.name)}</div>
-    <span class="tag">${(catById[x.c.cat]||{name:"기타"}).name}</span><span style="color:var(--sub);font-size:12px">구독자 <b style="color:var(--text)">${short(x.c.subs)}명</b></span></div></div>
+    <span class="tag">${(catById[x.c.cat]||{name:"기타"}).name}</span>${specTags(x.vs)}<span style="color:var(--sub);font-size:12px">구독자 <b style="color:var(--text)">${short(x.c.subs)}명</b></span></div></div>
     <div class="kpis"><div class="hot"><small>급상승 평균 ⚡</small><b>${fmt(x.hot)}</b></div><div><small>구독자 대비</small><b>${x.ratio>=1?fmt(x.ratio)+"배":(x.ratio*100).toFixed(0)+"%"}</b></div><div><small>급상승 영상</small><b>${x.count}개</b></div></div>
     <div class="avgline"><span>영상당 평균</span></div>
     <div class="kpis plain"><div><small>👁 조회수</small><b>${fmt(x.views)}</b></div><div><small>👍 좋아요</small><b>${fmt(x.likes)}</b></div><div><small>💬 댓글</small><b>${fmt(x.comments)}</b></div></div>
-    <div class="cthumbs">${[0,1,2,3].map(j=>x.vs[j]?thumbHTML(x.vs[j],{big:1}).replace('class="thumb"','class="thumb" style="width:100%;aspect-ratio:9/14" title="'+esc(x.vs[j].title)+'"').replace(/style="background:([^;]+);"/,'style="background:$1;"'):`<div class="empty"></div>`).join("")}</div>
+    <div class="cthumbs">${[0,1,2,3].map(j=>x.vs[j]?vidThumbLink(x.vs[j]):`<div class="empty"></div>`).join("")}</div>
+    <div class="cmore">채널 자세히 보기 ›</div>
   </div>`).join("")}</div>`:`<div class="card empty-state">해당 기간에 데이터가 없습니다.</div>`}`;
+}
+function specTags(vs){return SPECIAL.filter(s=>vs.some(v=>v.tags&&v.tags[s.id])).map(s=>`<span class="tag spec">${s.emo} ${s.name}</span>`).join("")}
+function vidThumbLink(v){
+  const href=ytVideo(v),inner=thumbHTML(v,{big:1});
+  return href?`<a class="tlink" href="${href}" target="_blank" rel="noopener" title="${esc(v.title)}">${inner}</a>`:`<div class="tlink" title="${esc(v.title)}">${inner}</div>`;
+}
+function openChannel(id){
+  const all=DATA.vids.filter(v=>v.channelId===id).sort((a,b)=>b.hot-a.hot);if(!all.length)return;
+  const c=DATA.cmap[id]||{id,name:all[0].channel,subs:0,hue:hash(id)%360,emo:"📺",cat:all[0].cat};
+  const sum=k=>all.reduce((a,v)=>a+v[k],0),href=ytChannel(id);
+  $("#chTitle").textContent=c.name;
+  $("#chBody").innerHTML=`<div class="chead" style="margin-top:8px">${avatarHTML(c,64)}<div>
+      <div class="cname">${esc(c.name)}</div><span class="tag">${(catById[c.cat]||{name:"기타"}).name}</span>${specTags(all)}
+      <div style="color:var(--sub);font-size:13px;margin-top:4px">구독자 <b style="color:var(--text)">${fmt(c.subs)}명</b></div></div></div>
+    <div class="kpis"><div class="hot"><small>최고 급상승 ⚡</small><b>${fmt(all[0].hot)}</b></div><div><small>수집된 영상</small><b>${all.length}개</b></div><div><small>총 조회수</small><b>${short(sum("views"))}</b></div></div>
+    <h4>이 채널의 영상 (최근 7일, 급상승 순)</h4>
+    ${all.map((v,i)=>{const h=ytVideo(v);return `<${h?`a href="${h}" target="_blank" rel="noopener"`:"div"} class="vrow chv">${thumbHTML(v,{rank:i+1})}<div class="vinfo">
+      <div class="vmeta"><span>${catName(v.cat)} ${Object.keys(v.tags||{}).map(t=>specById[t].emo).join("")}</span><span>${v.uploaded.getMonth()+1}/${v.uploaded.getDate()} ${timeStr(v.uploaded)}</span></div>
+      <div class="vtitle">${esc(v.title)}</div>
+      <div class="stats"><div class="hot"><span>급상승 ⚡</span><b>${fmt(v.hot)}</b></div><div><span>조회수</span><b>${fmt(v.views)}</b></div>
+      <div><span>좋아요</span><b>${fmt(v.likes)}</b></div><div><span>댓글</span><b>${fmt(v.comments)}</b></div></div></div></${h?"a":"div"}>`}).join("")}`;
+  const btn=$("#chOpen");btn.style.display=href?"":"none";btn.href=href||"#";
+  $("#chModal").classList.add("open");
 }
 
 /* ============ 페이지: 검색 (고급 필터) ============ */
 function applyF(list){
   const f=S.f,now=DATA.collected;
   return list.filter(v=>{
-    if(f.cat&&v.cat!==f.cat)return false;
+    if(!matchCat(v,f.cat))return false;
     if(f.period&&(now-v.uploaded)/864e5>f.period)return false;
     if(f.algo.length&&!f.algo.includes(v.algo))return false;
     if(!f.views.includes("all")){const ok=f.views.some(r=>r==="s"?v.views<1e5:r==="m"?v.views>=1e5&&v.views<1e6:v.views>=1e6);if(!ok)return false}
@@ -555,7 +621,7 @@ const ALGO=["매우 낮음","낮음","보통","높음","매우 높음"];
 function pageSearch(){
   const f=S.f;let list=applyF(DATA.vids.slice());
   const sk={basic:"hot",subs:"subs",views:"views",date:"uploaded"}[f.sort];list.sort((a,b)=>b[sk]-a[sk]);
-  const active=[f.cat&&catById[f.cat].name,f.period&&`최근 ${f.period}일`,f.algo.length&&`알고리즘 ${f.algo.map(a=>ALGO[a-1]).join("·")}`,
+  const active=[f.cat&&catName(f.cat),f.period&&`최근 ${f.period}일`,f.algo.length&&`알고리즘 ${f.algo.map(a=>ALGO[a-1]).join("·")}`,
     !f.views.includes("all")&&"조회수 구간",(f.vmin||f.vmax)&&"조회수 직접입력",f.type!=="all"&&(f.type==="ad"?"광고 영상":"일반 영상"),
     f.ai!=="all"&&(f.ai==="only"?"AI 영상만":"AI 영상 제외"),f.exclude&&`제외: ${f.exclude}`].filter(Boolean);
   return head("탐색","채널·영상 검색",["채널명이나 키워드로 검색하고, 고급 필터로 알고리즘 스코어·조회수 구간·영상 타입을 좁혀보세요.","<b>알고리즘 스코어</b>는 전체 영상 중 급상승 수치 분위(하위 20%~상위 10%)를 5단계로 나눈 값입니다."])+
@@ -576,7 +642,7 @@ function renderFilterBody(){
   const radio=(name,val,label,cur)=>`<label><input type="radio" name="${name}" value="${val}" ${String(cur)===String(val)?"checked":""}>${label}</label>`;
   const basic=`<h4>테이블 정렬</h4><div class="opts">${radio("sort","basic","기본 (급상승)",f.sort)}${radio("sort","subs","구독자 수",f.sort)}${radio("sort","views","조회수",f.sort)}${radio("sort","date","업로드 일자",f.sort)}</div>
     <h4>기본</h4><div class="sel"><div><div class="cdesc" style="margin:0 0 6px">국가</div><select disabled><option>대한민국</option></select></div>
-    <div><div class="cdesc" style="margin:0 0 6px">카테고리</div><select id="fcat"><option value="0">전체</option>${CATS.map(c=>`<option value="${c.id}" ${f.cat===c.id?"selected":""}>${c.name}</option>`).join("")}</select></div></div>`;
+    <div><div class="cdesc" style="margin:0 0 6px">카테고리</div><select id="fcat"><option value="0">전체</option>${SPECIAL.map(s=>`<option value="${s.id}" ${f.cat===s.id?"selected":""}>${s.name}</option>`).join("")}${CATS.map(c=>`<option value="${c.id}" ${f.cat===c.id?"selected":""}>${c.name}</option>`).join("")}</select></div></div>`;
   const video=`<h4>업로드 일자</h4><div class="opts">${[[0,"전체"],[1,"최근 1일"],[2,"최근 2일"],[3,"최근 3일"],[5,"최근 5일"],[7,"최근 7일"]].map(([v,l])=>radio("period",v,l,f.period)).join("")}</div>
     <h4>알고리즘 스코어</h4><div class="lvl">${ALGO.map((a,i)=>`<button data-algo="${i+1}" class="${f.algo.includes(i+1)?"on":""}">${a}</button>`).join("")}</div>
     <h4>조회수</h4><div class="opts">${[["all","전체"],["s","~ 10만"],["m","10만 ~ 100만"],["l","100만 +"]].map(([v,l])=>`<label><input type="checkbox" name="views" value="${v}" ${f.views.includes(v)?"checked":""}>${l}</label>`).join("")}</div>
@@ -590,7 +656,7 @@ function renderFilterBody(){
 function readDraft(){
   const g=n=>{const e=document.querySelector(`#fbody input[name=${n}]:checked`);return e?e.value:null};
   const f=DRAFT;
-  if(g("sort"))f.sort=g("sort");if($("#fcat"))f.cat=+$("#fcat").value;
+  if(g("sort"))f.sort=g("sort");if($("#fcat")){const c=$("#fcat").value;f.cat=specById[c]?c:+c}
   if(g("period")!==null)f.period=+g("period");if(g("type"))f.type=g("type");if(g("ai"))f.ai=g("ai");
   const vs=[...document.querySelectorAll("#fbody input[name=views]:checked")].map(e=>e.value);if(document.querySelector("#fbody input[name=views]"))f.views=vs.length?vs:["all"];
   if($("#vmin")){f.vmin=$("#vmin").value;f.vmax=$("#vmax").value}
@@ -641,7 +707,7 @@ document.addEventListener("click",e=>{
   if(!t)return;
   const d=t.dataset;
   if(d.date!==undefined)S.date=d.date;
-  else if(d.cat!==undefined)S.cat=+d.cat;
+  else if(d.cat!==undefined)S.cat=specById[d.cat]?d.cat:+d.cat;
   else if(d.vsort)S.vsort=d.vsort;
   else if(d.cperiod)S.cperiod=+d.cperiod;
   else if(d.csort)S.csort=d.csort;
@@ -659,6 +725,10 @@ document.addEventListener("change",e=>{
   if(e.target.name==="views"){const all=document.querySelector('#fbody input[name=views][value=all]');
     if(e.target.value==="all"&&e.target.checked)document.querySelectorAll('#fbody input[name=views]:not([value=all])').forEach(x=>x.checked=false);
     else if(e.target.checked)all.checked=false}
+});
+document.addEventListener("click",e=>{
+  if(e.target.closest("a.tlink"))return; // 썸네일은 유튜브로 바로 이동
+  const card=e.target.closest(".ccard[data-ch]");if(card)openChannel(card.dataset.ch);
 });
 document.addEventListener("click",e=>{if(e.target.id==="openFilter"){DRAFT=JSON.parse(JSON.stringify(S.f));MT="basic";renderFilterBody();$("#filterModal").classList.add("open")}});
 $("#fApply").onclick=()=>{readDraft();S.f=DRAFT;$("#filterModal").classList.remove("open");render();toast("필터를 적용했습니다")};
