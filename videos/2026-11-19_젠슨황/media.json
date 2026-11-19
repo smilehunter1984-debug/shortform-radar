@@ -1,0 +1,90 @@
+{
+ "hall": {
+  "title": "Jensen huang stanford 2026-04-30 013.jpg",
+  "lic": "CC BY 4.0",
+  "artist": "Anders Eidesvik",
+  "page": "https://commons.wikimedia.org/wiki/File:Jensen_huang_stanford_2026-04-30_013.jpg",
+  "file": "hall.jpg",
+  "type": "image"
+ },
+ "portrait1": {
+  "title": "Jensen huang stanford 2026-04-30 007.jpg",
+  "lic": "CC BY 4.0",
+  "artist": "Anders Eidesvik",
+  "page": "https://commons.wikimedia.org/wiki/File:Jensen_huang_stanford_2026-04-30_007.jpg",
+  "file": "portrait1.jpg",
+  "type": "image"
+ },
+ "portrait2": {
+  "title": "Jensen huang stanford 2026-04-30 008.jpg",
+  "lic": "CC BY 4.0",
+  "artist": "Anders Eidesvik",
+  "page": "https://commons.wikimedia.org/wiki/File:Jensen_huang_stanford_2026-04-30_008.jpg",
+  "file": "portrait2.jpg",
+  "type": "image"
+ },
+ "hq2005": {
+  "title": "Nvidia HQ.jpg",
+  "lic": "CC BY 2.0",
+  "artist": "Kevin McCarthy",
+  "page": "https://commons.wikimedia.org/wiki/File:Nvidia_HQ.jpg",
+  "file": "hq2005.jpg",
+  "type": "image"
+ },
+ "geforce": {
+  "title": "KL NVIDIA Geforce 256.jpg",
+  "lic": "CC BY-SA 3.0",
+  "artist": "Konstantin Lanzet",
+  "page": "https://commons.wikimedia.org/wiki/File:KL_NVIDIA_Geforce_256.jpg",
+  "file": "geforce.jpg",
+  "type": "image"
+ },
+ "speak": {
+  "title": "Jensen huang stanford 2026-04-09 033.jpg",
+  "lic": "CC BY 4.0",
+  "artist": "Anders Eidesvik",
+  "page": "https://commons.wikimedia.org/wiki/File:Jensen_huang_stanford_2026-04-09_033.jpg",
+  "file": "speak.jpg",
+  "type": "image"
+ },
+ "laugh": {
+  "title": "Jensen huang stanford 2026-04-09 008.jpg",
+  "lic": "CC BY 4.0",
+  "artist": "Anders Eidesvik",
+  "page": "https://commons.wikimedia.org/wiki/File:Jensen_huang_stanford_2026-04-09_008.jpg",
+  "file": "laugh.jpg",
+  "type": "image"
+ },
+ "students": {
+  "title": "Jensen huang stanford 2026-04-30 019.jpg",
+  "lic": "CC BY 4.0",
+  "artist": "Anders Eidesvik",
+  "page": "https://commons.wikimedia.org/wiki/File:Jensen_huang_stanford_2026-04-30_019.jpg",
+  "file": "students.jpg",
+  "type": "image"
+ },
+ "hq": {
+  "title": "NVIDIA Headquarters.jpg",
+  "lic": "CC BY-SA 4.0",
+  "artist": "Coolcaesar",
+  "page": "https://commons.wikimedia.org/wiki/File:NVIDIA_Headquarters.jpg",
+  "file": "hq.jpg",
+  "type": "image"
+ },
+ "modi": {
+  "title": "PM Modi is such an incredible student, NVIDIA CEO Jensen Huang.webm",
+  "lic": "CC BY 3.0",
+  "artist": "",
+  "page": "https://commons.wikimedia.org/wiki/File:PM_Modi_is_such_an_incredible_student,_NVIDIA_CEO_Jensen_Huang.webm",
+  "file": "modi.webm",
+  "type": "video"
+ },
+ "rtx": {
+  "title": "B-Rolls NVIDIA GeForce RTX 5090 FE (by ZMASLO) 5nj1qLazPlk.webm",
+  "lic": "CC BY 3.0",
+  "artist": "ZMASLO",
+  "page": "https://commons.wikimedia.org/wiki/File:B-Rolls_NVIDIA_GeForce_RTX_5090_FE_(by_ZMASLO)_5nj1qLazPlk.webm",
+  "file": "rtx.webm",
+  "type": "video"
+ }
+}

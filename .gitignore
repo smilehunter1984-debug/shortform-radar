@@ -1,0 +1,4 @@
+videos/*/media/
+videos/*/tts/
+videos/*/out/*.wav
+__pycache__/
