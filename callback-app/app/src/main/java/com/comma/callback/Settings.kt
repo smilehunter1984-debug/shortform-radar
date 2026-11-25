@@ -6,6 +6,11 @@ import androidx.preference.PreferenceManager
 
 /** 설정 화면에서 저장한 값을 읽고 쓰는 곳. */
 class Settings(context: Context) {
+    companion object {
+        const val DEFAULT_MESSAGE =
+            "[콤마인테리어필름] 전화 주셔서 감사합니다. 견적·시공 문의는 편하실 때 문자로 남겨주시면 빠르게 연락드리겠습니다."
+    }
+
     private val p: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
     init {
@@ -16,7 +21,8 @@ class Settings(context: Context) {
         get() = p.getBoolean("enabled", false)
         set(v) = p.edit().putBoolean("enabled", v).apply()
 
-    val message: String get() = p.getString("message", "")!!.trim()
+    /** 저장된 값이 아예 없으면 기본 문구를 쓴다(사용자가 일부러 비우면 빈 문자열 → 발송 안 함). */
+    val message: String get() = (p.getString("message", null) ?: DEFAULT_MESSAGE).trim()
     val lmsFallback: Boolean get() = p.getBoolean("lms_fallback", true)
 
     val sendAnswered: Boolean get() = p.getBoolean("send_answered", true)
