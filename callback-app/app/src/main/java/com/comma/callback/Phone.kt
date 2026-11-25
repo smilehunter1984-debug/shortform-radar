@@ -25,7 +25,11 @@ object Phone {
     }
 
     /** 한국 문자 기준 바이트 수(한글 등은 2바이트, 영문·숫자는 1바이트). 80바이트 넘으면 장문. */
-    fun smsBytes(text: String): Int = text.sumOf { if (it.code < 0x80) 1 else 2 }.toInt()
+    fun smsBytes(text: String): Int {
+        var n = 0
+        for (c in text) n += if (c.code < 0x80) 1 else 2
+        return n
+    }
 
     const val SMS_MAX_BYTES = 80
 }
