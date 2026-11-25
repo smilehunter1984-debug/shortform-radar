@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="문자 내용">
+        <EditTextPreference
+            app:key="message"
+            app:title="보낼 문자"
+            app:defaultValue="[콤마인테리어필름] 전화 주셔서 감사합니다. 견적·시공 문의는 편하실 때 문자로 남겨주시면 빠르게 연락드리겠습니다." />
+        <SwitchPreferenceCompat
+            app:key="lms_fallback"
+            app:title="장문 실패 시 나눠서 다시 보내기"
+            app:summary="장문(LMS)이 실패하면 짧은 문자 여러 개로 다시 보냅니다"
+            app:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="어떤 통화 후에 보낼까">
+        <SwitchPreferenceCompat app:key="send_answered" app:title="받은 전화(통화 완료)" app:defaultValue="true" />
+        <SwitchPreferenceCompat app:key="send_missed" app:title="부재중·거절한 전화" app:defaultValue="true" />
+        <SwitchPreferenceCompat app:key="send_outgoing" app:title="내가 건 전화" app:defaultValue="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="보내지 않을 번호">
+        <SwitchPreferenceCompat
+            app:key="exclude_contacts"
+            app:title="연락처에 저장된 번호 제외"
+            app:summary="가족·지인·거래처에게는 보내지 않습니다"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="mobile_only"
+            app:title="휴대폰 번호(010 등)에만 보내기"
+            app:summary="일반전화·070·대표번호에는 보내지 않습니다"
+            app:defaultValue="true" />
+        <EditTextPreference
+            app:key="blocked_numbers"
+            app:title="수신거부 번호"
+            app:summary="문자를 받지 않겠다고 한 번호. 줄바꿈이나 쉼표로 구분"
+            app:defaultValue="" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="발송 횟수 제한">
+        <EditTextPreference app:key="interval_days" app:title="같은 번호 재발송 간격(일)" app:defaultValue="30" />
+        <EditTextPreference app:key="daily_limit" app:title="하루 최대 발송 수" app:defaultValue="100" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="보내는 요일·시간">
+        <MultiSelectListPreference
+            app:key="send_days"
+            app:title="보내는 요일"
+            app:entries="@array/day_labels"
+            app:entryValues="@array/day_values"
+            app:defaultValue="@array/day_values" />
+        <ListPreference
+            app:key="start_hour"
+            app:title="시작 시각"
+            app:entries="@array/hour_labels"
+            app:entryValues="@array/hour_values"
+            app:defaultValue="9"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:key="end_hour"
+            app:title="끝 시각(이 시각 전까지)"
+            app:entries="@array/hour_labels"
+            app:entryValues="@array/hour_values"
+            app:defaultValue="20"
+            app:useSimpleSummaryProvider="true" />
+        <Preference
+            app:selectable="false"
+            app:summary="밤 9시~아침 8시에는 설정과 상관없이 보내지 않습니다(광고문자 야간 발송 금지 규정)." />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="시험 모드">
+        <SwitchPreferenceCompat
+            app:key="test_mode"
+            app:title="시험 모드(아래 번호에만 발송)"
+            app:summary="기존 콜백앱과 함께 쓰는 동안 고객에게 두 번 가지 않도록, 켜두면 아래 번호에서 온 전화에만 문자를 보냅니다"
+            app:defaultValue="true" />
+        <EditTextPreference
+            app:key="test_numbers"
+            app:title="시험용 번호(가족 등)"
+            app:summary="줄바꿈이나 쉼표로 구분"
+            app:defaultValue="" />
+    </PreferenceCategory>
+</PreferenceScreen>
