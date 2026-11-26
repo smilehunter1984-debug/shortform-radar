@@ -39,7 +39,9 @@ class CallStateReceiver : BroadcastReceiver() {
                     else -> CallProcessor.TYPE_OUTGOING
                 }
                 st.rang = false; st.offhook = false
-                st.lastCallEndAt = System.currentTimeMillis()
+                val now = System.currentTimeMillis()
+                if (now - st.lastCallEndAt < 5000) return
+                st.lastCallEndAt = now
 
                 val pending = goAsync()
                 Thread {

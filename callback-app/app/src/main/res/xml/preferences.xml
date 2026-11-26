@@ -6,6 +6,11 @@
             app:key="message"
             app:title="보낼 문자"
             app:defaultValue="[콤마인테리어필름] 전화 주셔서 감사합니다. 견적·시공 문의는 편하실 때 문자로 남겨주시면 빠르게 연락드리겠습니다." />
+        <EditTextPreference
+            app:key="lms_subject"
+            app:title="장문 제목"
+            app:defaultValue="콤마인테리어필름"
+            app:useSimpleSummaryProvider="true" />
         <SwitchPreferenceCompat
             app:key="lms_fallback"
             app:title="장문 실패 시 나눠서 다시 보내기"

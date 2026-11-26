@@ -24,8 +24,14 @@ object CallProcessor {
 
     private data class CallInfo(val number: String, val type: String, val duration: Long, val date: Long)
 
+    private val LOCK = Any()
+
     /** guessType: 통화 상태 변화로 짐작한 종류(통화기록을 못 읽을 때만 사용) */
-    fun onCallEnded(context: Context, guessType: String) {
+    fun onCallEnded(context: Context, guessType: String) = synchronized(LOCK) {
+        handleCallEnded(context, guessType)
+    }
+
+    private fun handleCallEnded(context: Context, guessType: String) {
         val state = RuntimeState(context)
         val db = LogDb.get(context)
 
@@ -41,6 +47,9 @@ object CallProcessor {
         }
 
         if (call == null) {
+            // 같은 통화에 대한 중복 처리(이미 처리한 통화가 가장 최근 통화)면 조용히 끝낸다
+            val latest = latestCall(context)
+            if (latest != null && latest.date == state.lastProcessedCallDate) return
             db.insert("", guessType, 0, LogDb.SKIPPED, "-", "번호 확인 실패(통화기록 권한 확인)", "")
             return
         }
@@ -60,7 +69,7 @@ object CallProcessor {
         val text = settings.message
         val id = db.insert(call.number, call.type, call.duration, LogDb.PENDING, "-", "", text)
         try {
-            val kind = SmsSender.send(context, id, call.number, text)
+            val kind = SmsSender.send(context, id, call.number, text, settings.lmsSubject)
             db.update(id, LogDb.PENDING, kind = kind)
         } catch (e: Exception) {
             db.update(id, LogDb.FAILED, reason = "발송 오류: ${e.javaClass.simpleName} ${e.message ?: ""}".trim())

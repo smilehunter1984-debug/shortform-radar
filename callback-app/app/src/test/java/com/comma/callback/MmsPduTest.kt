@@ -56,4 +56,15 @@ class MmsPduTest {
         val tail = pdu.copyOfRange(pdu.size - 300, pdu.size)
         assertArrayEquals(text.toByteArray(Charsets.UTF_8), tail)
     }
+
+    @Test fun subjectIsUtf8() {
+        val pdu = MmsPdu.buildSendReq("01012345678", "본문", "콤마인테리어필름")
+        val subj = "콤마인테리어필름".toByteArray(Charsets.UTF_8)
+        val at = (0 until pdu.size - 1).first { (pdu[it].toInt() and 0xFF) == 0x96 }
+        // 0x96, 길이, UTF-8(0xEA), 제목, NUL
+        assertEquals(subj.size + 2, pdu[at + 1].toInt() and 0xFF)
+        assertEquals(0xEA, pdu[at + 2].toInt() and 0xFF)
+        assertArrayEquals(subj, pdu.copyOfRange(at + 3, at + 3 + subj.size))
+        assertEquals(0, pdu[at + 3 + subj.size].toInt())
+    }
 }

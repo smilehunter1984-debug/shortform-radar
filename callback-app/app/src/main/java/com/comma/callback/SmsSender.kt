@@ -27,12 +27,12 @@ object SmsSender {
         }
 
     /** 길이에 따라 단문 또는 장문으로 보낸다. 반환값: 사용한 방식(SMS/LMS) */
-    fun send(context: Context, logId: Long, number: String, text: String): String {
+    fun send(context: Context, logId: Long, number: String, text: String, subject: String? = null): String {
         return if (Phone.smsBytes(text) <= Phone.SMS_MAX_BYTES) {
             sendSms(context, logId, number, text)
             "SMS"
         } else {
-            sendLms(context, logId, number, text)
+            sendLms(context, logId, number, text, subject)
             "LMS"
         }
     }
@@ -49,10 +49,10 @@ object SmsSender {
         }
     }
 
-    fun sendLms(context: Context, logId: Long, number: String, text: String) {
+    fun sendLms(context: Context, logId: Long, number: String, text: String, subject: String? = null) {
         val dir = File(context.cacheDir, "mms").apply { mkdirs() }
         val file = File(dir, "send_$logId.pdu")
-        file.writeBytes(MmsPdu.buildSendReq(number, text))
+        file.writeBytes(MmsPdu.buildSendReq(number, text, subject))
         val uri = FileProvider.getUriForFile(context, context.packageName + ".mmsfiles", file)
         smsManager(context).sendMultimediaMessage(
             context, uri, null, null, sentIntent(context, logId, "LMS", 0, 1)

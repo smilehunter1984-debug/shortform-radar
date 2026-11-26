@@ -23,6 +23,7 @@ class Settings(context: Context) {
 
     /** 저장된 값이 아예 없으면 기본 문구를 쓴다(사용자가 일부러 비우면 빈 문자열 → 발송 안 함). */
     val message: String get() = (p.getString("message", null) ?: DEFAULT_MESSAGE).trim()
+    val lmsSubject: String get() = (p.getString("lms_subject", null) ?: "콤마인테리어필름").trim()
     val lmsFallback: Boolean get() = p.getBoolean("lms_fallback", true)
 
     val sendAnswered: Boolean get() = p.getBoolean("send_answered", true)

@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                     val db = LogDb.get(this)
                     val id = db.insert(n, CallProcessor.TYPE_TEST, 0, LogDb.PENDING, "-", "", text)
                     val msg = try {
-                        val k = SmsSender.send(this, id, n, text)
+                        val k = SmsSender.send(this, id, n, text, settings.lmsSubject)
                         db.update(id, LogDb.PENDING, kind = k)
                         "보냈습니다. 결과는 '발송 이력'에서 확인하세요."
                     } catch (e: SecurityException) {
