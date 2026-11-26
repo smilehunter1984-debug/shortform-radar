@@ -68,6 +68,13 @@
   .work .info span { color: var(--muted); font-size: 14px; }
   .empty { background: #fff; border: 1px dashed var(--line); border-radius: 14px; padding: 26px 16px; text-align: center; color: var(--muted); }
 
+  .trycard { display:flex; gap:12px; align-items:center; text-decoration:none; background:#fff; border:2px solid var(--brand);
+    border-radius:16px; padding:16px; color:var(--ink); }
+  .trycard b { display:block; font-size:17px; margin-bottom:2px; }
+  .trycard span { color:var(--muted); font-size:14px; }
+  .trycard i { font-style:normal; font-size:38px; }
+  .trycard .eyebrow { margin:0 0 2px; }
+
   /* 진행 과정 */
   .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .step { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
@@ -173,8 +180,8 @@
     </div>
     <div class="cta">
       <a class="main" href="#quote">견적 받아보기 →</a>
+      <a class="sub" href="try.html">🎨 우리 집에 입혀 보기</a>
       <a class="sub" href="#works">시공사례 보기</a>
-      <a class="sub" id="smsHero" href="#">💬 문자 문의</a>
     </div>
   </div>
 </section>
@@ -186,6 +193,14 @@
     <p class="lead">사진을 좌우로 밀면 시공 전·후를 비교할 수 있어요.</p>
     <div class="filters" id="filters"></div>
     <div class="works" id="workList"></div>
+  </section>
+
+  <section class="block">
+    <a class="trycard" href="try.html">
+      <div><p class="eyebrow">입혀 보기</p><b>우리 집 사진에 필름을 미리 입혀 보세요</b>
+      <span>사진 한 장 올리고, 바꿀 곳 네 모서리만 누르면 시공 후 모습이 바로 보여요.</span></div>
+      <i>🎨</i>
+    </a>
   </section>
 
   <section class="block">
@@ -256,7 +271,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 ["#telTop", "#telFloat", "#telFoot"].forEach((s) => ($(s).href = `tel:${CONFIG.phone}`));
 $("#telFoot").textContent = pretty(CONFIG.phone);
-$("#smsHero").href = smsLink("[콤마인테리어필름 문의]\n");
+const smsHero = $("#smsHero"); if (smsHero) smsHero.href = smsLink("[콤마인테리어필름 문의]\n");
 
 /* ---------------- 시공사례 ---------------- */
 let filter = "전체";
@@ -530,6 +545,17 @@ async function send(btn) {
 /* 견적 영역에서는 하단 고정 버튼 숨김 */
 new IntersectionObserver((es) => es.forEach((x) => $("#floating").classList.toggle("hide", x.isIntersecting)), { threshold: 0.15 })
   .observe($("#quote"));
+
+/* 입혀 보기에서 넘어온 경우: 사진 2장(지금·예상)과 고른 필름을 미리 넣어 둠 */
+try {
+  const t = JSON.parse(sessionStorage.getItem("commaTry") || "null");
+  if (t) {
+    sessionStorage.removeItem("commaTry");
+    (t.photos || []).forEach((p) => photos.length < CONFIG.maxPhotos && photos.push(p));
+    D.memo = `입혀 보기에서 고른 필름: ${t.film}` + (t.others && t.others.length ? ` (비교: ${t.others.join(", ")})` : "");
+    bot(`🎨 입혀 보기에서 <b>${esc(t.film)}</b>을(를) 고르셨네요! 사진 ${(t.photos || []).length}장도 함께 넣어 둘게요.`);
+  }
+} catch (_) {}
 
 render();
 </script>

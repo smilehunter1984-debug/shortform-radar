@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>우리 집에 입혀 보기</title>
+<meta name="description" content="콤마인테리어필름 – 사진 한 장으로 필름 시공 후 모습을 미리 보세요.">
+<meta name="theme-color" content="#1F6F5C">
+<style>
+  :root { --brand:#1F6F5C; --brand-dark:#17574A; --brand-soft:#E7F1EE; --ink:#1C2321; --muted:#66706D; --line:#DDE3E1; --bg:#F6F7F5; }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin:0; background:#fff; color:var(--ink); font-size:16px; line-height:1.55; word-break:keep-all;
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif; }
+  .bar { position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--line); }
+  .bar .in { max-width:560px; margin:0 auto; height:52px; display:flex; align-items:center; justify-content:space-between; padding:0 12px; }
+  .bar a, .bar button { background:none; border:0; font:inherit; color:var(--muted); text-decoration:none; font-size:15px; cursor:pointer; padding:8px; }
+  .bar b { font-size:17px; }
+  .wrap { max-width:560px; margin:0 auto; padding:0 16px 130px; }
+  h1 { font-size:26px; line-height:1.3; margin:22px 0 8px; }
+  .lead { color:var(--muted); margin:0 0 16px; }
+  .tips { background:var(--bg); border-radius:14px; padding:6px 14px; }
+  .tip { display:flex; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); font-size:15px; }
+  .tip:last-child { border-bottom:0; }
+  .tip i { font-style:normal; font-size:20px; width:28px; text-align:center; }
+  .note { color:var(--muted); font-size:13px; text-align:center; margin-top:8px; }
+  .stage { position:relative; margin:12px -16px 0; background:#111; touch-action:none; user-select:none; }
+  .stage canvas { display:block; width:100%; height:auto; }
+  .guide { background:var(--brand-soft); color:var(--brand-dark); border-radius:12px; padding:11px 14px; font-size:15px; margin-top:12px; font-weight:600; }
+  .row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .chip { border:1px solid var(--line); background:#fff; border-radius:999px; padding:8px 13px; font:inherit; font-size:14px; color:var(--ink); cursor:pointer; }
+  .chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .label { font-weight:700; margin:18px 0 8px; }
+  .sw { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .sw button { border:0; background:none; padding:0; font:inherit; cursor:pointer; text-align:center; color:var(--ink); }
+  .sw canvas { width:100%; aspect-ratio:1; border-radius:12px; display:block; border:2px solid transparent; box-shadow:inset 0 0 0 1px var(--line); }
+  .sw button.on canvas { border-color:var(--brand); box-shadow:0 0 0 2px var(--brand); }
+  .sw span { display:block; font-size:12px; margin-top:4px; line-height:1.3; }
+  .sw small { color:var(--muted); font-size:11px; }
+  .pick { position:relative; }
+  .pick .badge { position:absolute; top:6px; left:6px; background:var(--brand); color:#fff; font-size:11px; border-radius:6px; padding:1px 6px; }
+  .ba { position:relative; margin:12px -16px 0; overflow:hidden; background:#111; touch-action:pan-y; }
+  .ba canvas, .ba img { display:block; width:100%; height:auto; }
+  .ba .after { position:absolute; inset:0; clip-path:inset(0 0 0 50%); }
+  .ba .line { position:absolute; top:0; bottom:0; left:50%; width:3px; background:#fff; transform:translateX(-50%); box-shadow:0 0 6px rgba(0,0,0,.4); pointer-events:none; }
+  .ba .knob { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:44px; height:44px; border-radius:50%; background:#fff; color:var(--brand-dark); display:flex; align-items:center; justify-content:center; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,.3); pointer-events:none; }
+  .ba .tag { position:absolute; top:10px; background:rgba(0,0,0,.6); color:#fff; font-size:12px; padding:3px 8px; border-radius:6px; }
+  .ba .tag.l { left:10px; } .ba .tag.r { right:10px; }
+  .ba .warn { position:absolute; left:10px; bottom:10px; background:rgba(0,0,0,.6); color:#fff; font-size:12px; padding:3px 8px; border-radius:6px; }
+  .ba input { position:absolute; inset:0; width:100%; height:100%; opacity:0; margin:0; cursor:ew-resize; }
+  .film { display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .film canvas { width:40px; height:40px; border-radius:8px; box-shadow:inset 0 0 0 1px var(--line); }
+  .film small { color:var(--muted); display:block; font-size:12px; }
+  .actions { position:fixed; left:0; right:0; bottom:0; background:rgba(255,255,255,.97); border-top:1px solid var(--line); padding:10px 16px calc(10px + env(safe-area-inset-bottom)); z-index:20; }
+  .actions .in { max-width:560px; margin:0 auto; display:flex; gap:8px; }
+  .btn { flex:1; border:0; border-radius:12px; padding:15px 10px; font:inherit; font-size:16px; font-weight:700; cursor:pointer; text-align:center; text-decoration:none; }
+  .btn.go { background:var(--brand); color:#fff; }
+  .btn.go:disabled { opacity:.45; }
+  .btn.sub { background:#fff; color:var(--ink); border:1px solid var(--line); flex:0 0 34%; }
+  .links { display:flex; justify-content:center; gap:16px; margin-top:12px; font-size:14px; }
+  .links button { background:none; border:0; color:var(--muted); font:inherit; cursor:pointer; text-decoration:underline; }
+  input[type=file] { display:none; }
+  .hide { display:none !important; }
+</style>
+</head>
+<body>
+<div class="bar"><div class="in">
+  <a href="index.html">✕ 닫기</a><b>입혀 보기</b><button id="restart">처음부터</button>
+</div></div>
+
+<main class="wrap">
+  <!-- 1. 사진 올리기 -->
+  <section id="s1">
+    <h1>사진 한 장이면<br>시공 후 모습이 보여요</h1>
+    <p class="lead">우리 집 문·붙박이장 사진을 올리고, 바꿀 곳을 표시한 뒤 필름을 고르면 바로 입혀 드려요.</p>
+    <div class="tips">
+      <div class="tip"><i>💡</i>불을 켜고 밝을 때 찍어 주세요</div>
+      <div class="tip"><i>🚪</i>바꿀 곳이 다 나오게, 정면에서 찍어 주세요</div>
+      <div class="tip"><i>🙈</i>사람이나 개인 물건은 빼고 찍어 주세요</div>
+    </div>
+    <p class="note">사진은 이 폰 안에서만 처리되고, 어디에도 저장되지 않아요.</p>
+  </section>
+
+  <!-- 2. 바꿀 곳 표시 -->
+  <section id="s2" class="hide">
+    <div class="guide" id="markGuide"></div>
+    <div class="stage" id="stage"><canvas id="markCanvas"></canvas></div>
+    <div class="row">
+      <button class="chip" id="undoPt">↶ 한 점 지우기</button>
+      <button class="chip" id="addArea">＋ 바꿀 곳 하나 더 (문틀·옆문 등)</button>
+      <button class="chip" id="clearAll">모두 지우기</button>
+    </div>
+    <p class="note">점을 잘못 찍었으면 끌어서 옮길 수 있어요.</p>
+  </section>
+
+  <!-- 3. 필름 고르기 -->
+  <section id="s3" class="hide">
+    <h1 style="font-size:22px">어떤 필름을 입힐까요?</h1>
+    <p class="lead">두 개까지 고르면 나란히 비교할 수 있어요.</p>
+    <div class="row" id="cats"></div>
+    <div class="label" id="swLabel"></div>
+    <div class="sw" id="swatches"></div>
+    <p class="note">견본 색은 화면마다 조금씩 달라요. 시공 전에 실물 견본으로 확인해 드려요.</p>
+  </section>
+
+  <!-- 4. 결과 -->
+  <section id="s4" class="hide">
+    <div class="ba" id="ba">
+      <canvas id="beforeC"></canvas>
+      <canvas id="afterC" class="after"></canvas>
+      <span class="tag l" id="tagL">지금</span><span class="tag r" id="tagR">예상</span>
+      <span class="warn">예상 사진 · 실제와 다를 수 있어요</span>
+      <div class="line" id="line"></div><div class="knob" id="knob">◀▶</div>
+      <input type="range" id="slider" min="0" max="100" value="50" aria-label="전후 비교">
+    </div>
+    <div class="film" id="filmInfo"></div>
+    <div class="label">왼쪽에 놓고 비교할 사진</div>
+    <div class="row" id="leftChoice"></div>
+    <div class="links">
+      <button id="saveImg">⬇ 사진 저장</button>
+      <button id="reMark">바꿀 곳 다시 표시</button>
+    </div>
+  </section>
+</main>
+
+<div class="actions"><div class="in" id="actions"></div></div>
+<input type="file" id="fileAlbum" accept="image/*">
+<input type="file" id="fileCam" accept="image/*" capture="environment">
+
+<script>
+/* ============ 필름 견본: 나중에 실제 필름(품번·사진)으로 바꾸면 됩니다 ============
+   kind: solid(단색) | wood(나무결) | stone(돌·패브릭 느낌)
+   image: "films/PS170.jpg" 처럼 실제 필름 사진을 넣으면 그 사진으로 입혀집니다. */
+const FILMS = [
+  { id: "W01", name: "퓨어 화이트", cat: "단색", kind: "solid", color: "#F4F3EF" },
+  { id: "W02", name: "크림 화이트", cat: "단색", kind: "solid", color: "#EEE8DA" },
+  { id: "G01", name: "웜 그레이", cat: "단색", kind: "solid", color: "#BDB6AA" },
+  { id: "G02", name: "라이트 그레이", cat: "단색", kind: "solid", color: "#C9CCCC" },
+  { id: "G03", name: "차콜", cat: "단색", kind: "solid", color: "#4A4D4F" },
+  { id: "B01", name: "매트 블랙", cat: "단색", kind: "solid", color: "#2A2A2A" },
+  { id: "O01", name: "화이트 오크", cat: "우드", kind: "wood", color: "#D8C7A8" },
+  { id: "O02", name: "내추럴 오크", cat: "우드", kind: "wood", color: "#B88D5E" },
+  { id: "O03", name: "월넛", cat: "우드", kind: "wood", color: "#6E4A31" },
+  { id: "O04", name: "다크 월넛", cat: "우드", kind: "wood", color: "#45301F" },
+  { id: "S01", name: "베이지 스톤", cat: "스톤", kind: "stone", color: "#D9CFBF" },
+  { id: "S02", name: "그레이 스톤", cat: "스톤", kind: "stone", color: "#A9A9A4" },
+];
+/* ============================================================================ */
+
+const $ = (s) => document.querySelector(s);
+const MAX_SIDE = 1400;
+let photo = null;          // 원본 사진 canvas
+let areas = [[]];          // 바꿀 곳: 점 4개씩 [[{x,y}...], ...] (사진 픽셀 좌표)
+let picked = [];           // 고른 필름 id (최대 2)
+let step = 1;
+let leftMode = "before";   // 비교 왼쪽: before | 다른 필름 id
+let cat = "전체";
+const texCache = {};
+
+/* ---------------- 단계 이동 ---------------- */
+function show(n) {
+  step = n;
+  ["s1", "s2", "s3", "s4"].forEach((id, i) => $("#" + id).classList.toggle("hide", i + 1 !== n));
+  const A = $("#actions");
+  if (n === 1) A.innerHTML = `<button class="btn sub" id="aAlbum">🖼 앨범</button><button class="btn go" id="aCam">📷 사진 찍기</button>`;
+  if (n === 2) A.innerHTML = `<button class="btn sub" id="aBack">뒤로</button><button class="btn go" id="aNext">필름 고르기</button>`;
+  if (n === 3) A.innerHTML = `<button class="btn sub" id="aBack">뒤로</button><button class="btn go" id="aNext">입혀 보기</button>`;
+  if (n === 4) A.innerHTML = `<button class="btn sub" id="aBack">다른 필름</button><a class="btn go" id="aQuote" href="#">이 필름으로 견적</a>`;
+  bindActions();
+  if (n === 2) drawMark();
+  if (n === 3) drawSwatches();
+  window.scrollTo({ top: 0 });
+}
+function bindActions() {
+  const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
+  on("#aAlbum", () => $("#fileAlbum").click());
+  on("#aCam", () => $("#fileCam").click());
+  on("#aBack", () => show(step - 1));
+  on("#aNext", () => {
+    if (step === 2) { if (!complete().length) return; show(3); }
+    else if (step === 3) { if (!picked.length) return; render(); show(4); }
+  });
+  on("#aQuote", (e) => { e.preventDefault(); toQuote(); });
+  updateNext();
+}
+function updateNext() {
+  const n = $("#aNext"); if (!n) return;
+  if (step === 2) n.disabled = !complete().length;
+  if (step === 3) n.disabled = !picked.length;
+}
+$("#restart").onclick = () => { photo = null; areas = [[]]; picked = []; show(1); };
+
+/* ---------------- 사진 불러오기 ---------------- */
+["#fileAlbum", "#fileCam"].forEach((id) => $(id).addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => {
+    const s = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+    photo = document.createElement("canvas");
+    photo.width = Math.round(img.naturalWidth * s); photo.height = Math.round(img.naturalHeight * s);
+    photo.getContext("2d").drawImage(img, 0, 0, photo.width, photo.height);
+    URL.revokeObjectURL(url);
+    areas = [[]];
+    show(2);
+  };
+  img.onerror = () => alert("사진을 열 수 없어요. 다른 사진으로 해 주세요.");
+  img.src = url;
+}));
+
+/* ---------------- 바꿀 곳 표시 (네 모서리) ---------------- */
+const mc = $("#markCanvas");
+const complete = () => areas.filter((a) => a.length === 4);
+const CORNER = ["왼쪽 위", "오른쪽 위", "오른쪽 아래", "왼쪽 아래"];
+const COLORS = ["#2BD4A4", "#FFC94A", "#6FB6FF"];
+
+function drawMark() {
+  if (!photo) return;
+  mc.width = photo.width; mc.height = photo.height;
+  const g = mc.getContext("2d");
+  g.drawImage(photo, 0, 0);
+  const r = Math.max(8, photo.width / 70);
+  areas.forEach((a, ai) => {
+    const col = COLORS[ai % COLORS.length];
+    if (a.length) {
+      g.beginPath(); a.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
+      if (a.length === 4) { g.closePath(); g.fillStyle = col + "40"; g.fill(); }
+      g.lineWidth = r / 3; g.strokeStyle = col; g.stroke();
+    }
+    a.forEach((p, i) => {
+      g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.fillStyle = "#fff"; g.fill();
+      g.lineWidth = r / 3; g.strokeStyle = col; g.stroke();
+      g.fillStyle = "#111"; g.font = `bold ${r * 1.1}px sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText(String(i + 1), p.x, p.y + 1);
+    });
+  });
+  const cur = areas[areas.length - 1];
+  $("#markGuide").textContent = cur.length < 4
+    ? `바꿀 곳${areas.length > 1 ? ` ${areas.length}` : ""}의 ${CORNER[cur.length]} 모서리를 눌러 주세요 (${cur.length + 1}/4)`
+    : "좋아요! 다른 곳도 바꾸려면 '바꿀 곳 하나 더'를, 아니면 '필름 고르기'를 눌러 주세요.";
+  $("#addArea").disabled = cur.length < 4 || areas.length >= 3;
+  updateNext();
+}
+function toPhoto(ev) {
+  const b = mc.getBoundingClientRect();
+  return { x: (ev.clientX - b.left) * (mc.width / b.width), y: (ev.clientY - b.top) * (mc.height / b.height) };
+}
+let drag = null;
+mc.addEventListener("pointerdown", (ev) => {
+  if (!photo) return;
+  const p = toPhoto(ev);
+  const hit = (mc.width / mc.getBoundingClientRect().width) * 26;
+  const cur = areas[areas.length - 1];
+  // 지금 찍는 곳이 미완성이면 그 곳의 점만 옮길 수 있음(옆 영역과 모서리가 겹쳐도 새 점이 찍히게)
+  const movable = cur.length < 4 ? [cur] : areas;
+  for (const a of movable) for (const q of a) if (Math.hypot(q.x - p.x, q.y - p.y) < hit) { drag = q; mc.setPointerCapture(ev.pointerId); return; }
+  if (cur.length < 4) { cur.push(p); if (cur.length === 4) sortCorners(cur); drawMark(); }
+});
+mc.addEventListener("pointermove", (ev) => { if (drag) { Object.assign(drag, toPhoto(ev)); drawMark(); } });
+mc.addEventListener("pointerup", () => { drag = null; });
+$("#undoPt").onclick = () => {
+  let cur = areas[areas.length - 1];
+  if (!cur.length && areas.length > 1) { areas.pop(); cur = areas[areas.length - 1]; }
+  cur.pop(); drawMark();
+};
+$("#addArea").onclick = () => { if (areas[areas.length - 1].length === 4 && areas.length < 3) { areas.push([]); drawMark(); } };
+$("#clearAll").onclick = () => { areas = [[]]; drawMark(); };
+// 순서를 잘못 찍어도 왼위-오위-오아래-왼아래로 정리
+function sortCorners(a) {
+  const c = a.reduce((s, p) => ({ x: s.x + p.x / 4, y: s.y + p.y / 4 }), { x: 0, y: 0 });
+  a.sort((p, q) => Math.atan2(p.y - c.y, p.x - c.x) - Math.atan2(q.y - c.y, q.x - c.x));
+  // atan2 정렬 후 왼쪽 위(x+y 최소)가 첫 번째가 되도록 회전
+  let k = 0; a.forEach((p, i) => { if (p.x + p.y < a[k].x + a[k].y) k = i; });
+  const r = a.splice(0, k); a.push(...r);
+}
+
+/* ---------------- 필름 견본(무늬) 만들기 ---------------- */
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function seeded(seed) { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
+function texture(film) {
+  if (texCache[film.id]) return texCache[film.id];
+  const W = 400, H = 800;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d");
+  if (film.image && film._img && film._img.complete) {
+    g.drawImage(film._img, 0, 0, W, H);
+  } else {
+    const [r0, g0, b0] = hexRgb(film.color);
+    const img = g.createImageData(W, H), d = img.data, rnd = seeded(film.id.charCodeAt(1) * 97 + film.id.charCodeAt(2));
+    const lines = Array.from({ length: 6 }, () => ({ f: 0.002 + rnd() * 0.008, p: rnd() * 6.28, a: 1 + rnd() * 3 }));
+    const col = Array.from({ length: W + 64 }, () => rnd() - 0.5);
+    for (let k = 0; k < 3; k++) for (let x = 1; x < col.length - 1; x++) col[x] = (col[x - 1] + col[x] * 2 + col[x + 1]) / 4;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let k = 1;
+      if (film.kind === "wood") {
+        let off = 0; for (const l of lines) off += Math.sin(y * l.f + l.p) * l.a;
+        const xx = Math.max(0, Math.min(col.length - 1, (x + off + 32) | 0));
+        const v = Math.sin((x + off) * 0.05) * 0.4 + Math.sin((x + off * 1.3) * 0.013) * 0.6;
+        k = 1 + v * 0.05 + col[xx] * 0.35 + (rnd() - 0.5) * 0.025;
+      } else if (film.kind === "stone") {
+        k = 1 + (rnd() - 0.5) * 0.09 + Math.sin(x * 0.05 + y * 0.03) * 0.02;
+      } else {
+        k = 1 + (rnd() - 0.5) * 0.012;
+      }
+      const i = (y * W + x) * 4;
+      d[i] = Math.min(255, r0 * k); d[i + 1] = Math.min(255, g0 * k); d[i + 2] = Math.min(255, b0 * k); d[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  }
+  const data = g.getImageData(0, 0, W, H).data;
+  return (texCache[film.id] = { W, H, data, canvas: c });
+}
+FILMS.forEach((f) => { if (f.image) { f._img = new Image(); f._img.onload = () => delete texCache[f.id]; f._img.src = f.image; } });
+
+function drawSwatches() {
+  const cats = ["전체", ...new Set(FILMS.map((f) => f.cat))];
+  $("#cats").innerHTML = cats.map((c) => `<button class="chip ${c === cat ? "on" : ""}" data-c="${c}">${c}</button>`).join("");
+  $("#cats").onclick = (e) => { if (e.target.dataset.c) { cat = e.target.dataset.c; drawSwatches(); } };
+  const list = FILMS.filter((f) => cat === "전체" || f.cat === cat);
+  $("#swLabel").textContent = `콤마인테리어필름이 자주 쓰는 색 · ${picked.length}/2 선택`;
+  $("#swatches").innerHTML = list.map((f) => `
+    <button class="pick ${picked.includes(f.id) ? "on" : ""}" data-id="${f.id}">
+      <canvas width="120" height="120" data-sw="${f.id}"></canvas>
+      ${picked.includes(f.id) ? `<span class="badge">${picked.indexOf(f.id) + 1}</span>` : ""}
+      <span>${f.name}<br><small>${f.id}</small></span></button>`).join("");
+  $("#swatches").querySelectorAll("canvas[data-sw]").forEach((cv) => {
+    const t = texture(FILMS.find((f) => f.id === cv.dataset.sw));
+    cv.getContext("2d").drawImage(t.canvas, 140, 200, 120, 120, 0, 0, 120, 120);
+  });
+  $("#swatches").onclick = (e) => {
+    const b = e.target.closest("button[data-id]"); if (!b) return;
+    const id = b.dataset.id;
+    if (picked.includes(id)) picked = picked.filter((x) => x !== id);
+    else { picked.push(id); if (picked.length > 2) picked.shift(); }
+    drawSwatches(); updateNext();
+  };
+}
+
+/* ---------------- 입히기: 원근 변환 + 원래 빛·그림자 살리기 ---------------- */
+function homography(q) {
+  // 단위 정사각형(0,0)-(1,0)-(1,1)-(0,1) → 사각형 q 로 가는 변환 (Heckbert)
+  const [p0, p1, p2, p3] = q;
+  const dx1 = p1.x - p2.x, dx2 = p3.x - p2.x, dx3 = p0.x - p1.x + p2.x - p3.x;
+  const dy1 = p1.y - p2.y, dy2 = p3.y - p2.y, dy3 = p0.y - p1.y + p2.y - p3.y;
+  let g = 0, h = 0;
+  if (Math.abs(dx3) > 1e-9 || Math.abs(dy3) > 1e-9) {
+    const den = dx1 * dy2 - dx2 * dy1;
+    g = (dx3 * dy2 - dx2 * dy3) / den; h = (dx1 * dy3 - dx3 * dy1) / den;
+  }
+  const a = p1.x - p0.x + g * p1.x, b = p3.x - p0.x + h * p3.x, c = p0.x;
+  const d = p1.y - p0.y + g * p1.y, e = p3.y - p0.y + h * p3.y, f = p0.y;
+  return [a, b, c, d, e, f, g, h, 1];
+}
+function invert3(m) {
+  const [a, b, c, d, e, f, g, h, i] = m;
+  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+  const det = a * A + b * B + c * C;
+  return [A / det, -(b * i - c * h) / det, (b * f - c * e) / det,
+          B / det, (a * i - c * g) / det, -(a * f - c * d) / det,
+          C / det, -(a * h - b * g) / det, (a * e - b * d) / det];
+}
+function paint(filmId) {
+  const W = photo.width, H = photo.height;
+  const out = document.createElement("canvas"); out.width = W; out.height = H;
+  const og = out.getContext("2d"); og.drawImage(photo, 0, 0);
+  const img = og.getImageData(0, 0, W, H), d = img.data;
+  const src = photo.getContext("2d").getImageData(0, 0, W, H).data;
+  const tex = texture(FILMS.find((f) => f.id === filmId));
+  for (const q of complete()) {
+    const inv = invert3(homography(q));
+    const x0 = Math.max(0, Math.floor(Math.min(...q.map((p) => p.x)))), x1 = Math.min(W - 1, Math.ceil(Math.max(...q.map((p) => p.x))));
+    const y0 = Math.max(0, Math.floor(Math.min(...q.map((p) => p.y)))), y1 = Math.min(H - 1, Math.ceil(Math.max(...q.map((p) => p.y))));
+    // 1) 원래 사진의 '큰 빛과 그림자'만 뽑기: 밝기를 넓게 흐리게(기존 나뭇결·스티커 무늬는 지움)
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    const lum = (x, y) => { const i = ((y + y0) * W + (x + x0)) * 4; return 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2]; };
+    // 스티커·손잡이처럼 튀는 점은 무시하려고 가운데값(중앙값) 기준으로 잘라냄
+    const hist = new Uint32Array(256); let cnt = 0;
+    for (let y = 0; y < bh; y += 2) for (let x = 0; x < bw; x += 2) { hist[Math.min(255, lum(x, y) | 0)]++; cnt++; }
+    let med = 0; for (let acc = 0; med < 255 && (acc += hist[med]) < cnt / 2; med++);
+    const lo = med * 0.7, hi = med * 1.35 + 8;
+    const I = new Float64Array((bw + 1) * (bh + 1));
+    for (let y = 0; y < bh; y++) {
+      let row = 0;
+      for (let x = 0; x < bw; x++) {
+        row += Math.max(lo, Math.min(hi, lum(x, y)));
+        I[(y + 1) * (bw + 1) + (x + 1)] = I[y * (bw + 1) + (x + 1)] + row;
+      }
+    }
+    const R = Math.max(6, Math.round(Math.min(bw, bh) * 0.08));
+    const blur = (x, y) => {
+      const ax = Math.max(0, x - R), ay = Math.max(0, y - R), bx = Math.min(bw, x + R + 1), by = Math.min(bh, y + R + 1);
+      const S = I[by * (bw + 1) + bx] - I[ay * (bw + 1) + bx] - I[by * (bw + 1) + ax] + I[ay * (bw + 1) + ax];
+      return S / ((bx - ax) * (by - ay));
+    };
+    const pts = []; let sum = 0;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const w = inv[6] * x + inv[7] * y + inv[8];
+      const u = (inv[0] * x + inv[1] * y + inv[2]) / w, v = (inv[3] * x + inv[4] * y + inv[5]) / w;
+      if (u < 0 || u > 1 || v < 0 || v > 1) continue;
+      const L = blur(x - x0, y - y0);
+      sum += L; pts.push((y * W + x) * 4, u, v, L);
+    }
+    const n = pts.length / 4; if (!n) continue;
+    const avg = sum / n || 1;
+    const minUV = Math.min(x1 - x0, y1 - y0);
+    // 2) 필름 무늬 × (빛·그림자 비율)
+    for (let k = 0; k < pts.length; k += 4) {
+      const i = pts[k], u = pts[k + 1], v = pts[k + 2], L = pts[k + 3];
+      const tx = Math.min(tex.W - 1, (u * tex.W) | 0), ty = Math.min(tex.H - 1, (v * tex.H) | 0);
+      const ti = (ty * tex.W + tx) * 4;
+      const sh = Math.max(0.7, Math.min(1.12, L / avg));
+      // 가장자리 1px 부드럽게
+      const a = Math.min(1, Math.min(u, 1 - u, v, 1 - v) * minUV / 1.2 + 0.25);
+      d[i] = d[i] * (1 - a) + Math.min(255, tex.data[ti] * sh) * a;
+      d[i + 1] = d[i + 1] * (1 - a) + Math.min(255, tex.data[ti + 1] * sh) * a;
+      d[i + 2] = d[i + 2] * (1 - a) + Math.min(255, tex.data[ti + 2] * sh) * a;
+    }
+  }
+  og.putImageData(img, 0, 0);
+  return out;
+}
+
+/* ---------------- 결과 ---------------- */
+const results = {};
+function render() {
+  picked.forEach((id) => (results[id] = paint(id)));
+  leftMode = "before";
+  showResult();
+}
+function filmName(id) { const f = FILMS.find((x) => x.id === id); return f ? `${f.name} (${f.id})` : ""; }
+function showResult() {
+  const main = picked[picked.length - 1];
+  const left = leftMode === "before" ? photo : results[leftMode];
+  const bc = $("#beforeC"), ac = $("#afterC");
+  [bc, ac].forEach((c) => { c.width = photo.width; c.height = photo.height; });
+  bc.getContext("2d").drawImage(left, 0, 0);
+  ac.getContext("2d").drawImage(results[main], 0, 0);
+  $("#tagL").textContent = leftMode === "before" ? "지금" : FILMS.find((f) => f.id === leftMode).name;
+  $("#tagR").textContent = "예상 · " + FILMS.find((f) => f.id === main).name;
+  const t = texture(FILMS.find((f) => f.id === main));
+  $("#filmInfo").innerHTML = `<canvas width="40" height="40" id="fi"></canvas><div><small>예상 사진</small><b>${filmName(main)}</b></div>`;
+  $("#fi").getContext("2d").drawImage(t.canvas, 150, 300, 80, 80, 0, 0, 40, 40);
+  $("#leftChoice").innerHTML = [`<button class="chip ${leftMode === "before" ? "on" : ""}" data-l="before">시공 전</button>`,
+    ...picked.filter((id) => id !== main).map((id) => `<button class="chip ${leftMode === id ? "on" : ""}" data-l="${id}">${filmName(id)}</button>`),
+    ...(picked.length > 1 ? [`<button class="chip" data-swap="1">⇄ 오른쪽 바꾸기</button>`] : [])].join("");
+  setSlider(50);
+  const q = $("#aQuote"); if (q) q.textContent = `${FILMS.find((f) => f.id === main).name}로 견적`;
+}
+$("#leftChoice").onclick = (e) => {
+  if (e.target.dataset.l) { leftMode = e.target.dataset.l; showResult(); }
+  if (e.target.dataset.swap) { picked.reverse(); leftMode = "before"; showResult(); }
+};
+function setSlider(v) {
+  $("#slider").value = v;
+  $("#afterC").style.clipPath = `inset(0 0 0 ${v}%)`;
+  $("#line").style.left = v + "%"; $("#knob").style.left = v + "%";
+}
+$("#slider").addEventListener("input", (e) => setSlider(e.target.value));
+$("#reMark").onclick = () => show(2);
+$("#saveImg").onclick = () => {
+  const a = document.createElement("a");
+  a.download = `콤마_입혀보기_${picked[picked.length - 1]}.jpg`;
+  a.href = results[picked[picked.length - 1]].toDataURL("image/jpeg", 0.9);
+  a.click();
+};
+
+/* 견적 페이지로 넘기기: 원본 사진 + 예상 사진 + 고른 필름 */
+function toQuote() {
+  const main = picked[picked.length - 1];
+  const small = (c) => {
+    const s = Math.min(1, 1600 / Math.max(c.width, c.height)), t = document.createElement("canvas");
+    t.width = Math.round(c.width * s); t.height = Math.round(c.height * s);
+    t.getContext("2d").drawImage(c, 0, 0, t.width, t.height); return t.toDataURL("image/jpeg", 0.82);
+  };
+  try {
+    sessionStorage.setItem("commaTry", JSON.stringify({
+      film: filmName(main), others: picked.filter((x) => x !== main).map(filmName),
+      photos: [small(photo), small(results[main])],
+    }));
+  } catch (_) { /* 저장 공간이 부족하면 필름 이름만 넘김 */
+    try { sessionStorage.setItem("commaTry", JSON.stringify({ film: filmName(main), photos: [] })); } catch (__) {}
+  }
+  location.href = "index.html#quote";
+}
+
+show(1);
+</script>
+</body>
+</html>
