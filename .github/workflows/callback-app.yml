@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: callback-app
@@ -31,6 +33,19 @@ jobs:
           name: comma-callback-apk
           path: callback-app/comma-callback.apk
           retention-days: 30
+      # 고정 주소로 최신 APK 올리기:
+      # https://github.com/<저장소>/releases/download/callback-app-latest/comma-callback.apk
+      - name: 고정 주소에 최신 APK 올리기
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: callback-app-latest
+          name: 콤마 콜백문자 앱 (최신)
+          body: |
+            폰에서 아래 comma-callback.apk 를 누르면 바로 받아집니다. 기존 앱 위에 덮어 설치하면 설정·이력은 그대로 유지됩니다.
+            빌드 커밋: ${{ github.sha }}
+          prerelease: true
+          make_latest: false
+          files: callback-app/comma-callback.apk
 
   emulator-test:
     runs-on: ubuntu-latest
