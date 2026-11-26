@@ -67,4 +67,27 @@ class MmsPduTest {
         assertArrayEquals(subj, pdu.copyOfRange(at + 3, at + 3 + subj.size))
         assertEquals(0, pdu[at + 3 + subj.size].toInt())
     }
+
+    @Test fun imagePartsComeBeforeText() {
+        val img1 = ByteArray(500) { 1 }
+        val img2 = ByteArray(200) { 2 }
+        val text = "사진 문자"
+        val pdu = MmsPdu.buildSendReq("01012345678", text, null, listOf(img1, img2))
+        val ct = (0 until pdu.size - 1).first { (pdu[it].toInt() and 0xFF) == 0x84 && (pdu[it + 1].toInt() and 0xFF) == 0xA3 }
+        var p = ct + 2
+        assertEquals(3, pdu[p++].toInt()) // 파트 3개
+        fun uv(): Int { var v = 0; while (true) { val b = pdu[p++].toInt() and 0xFF; v = (v shl 7) or (b and 0x7F); if (b and 0x80 == 0) return v } }
+        for (img in listOf(img1, img2)) {
+            val hl = uv(); val dl = uv()
+            assertEquals(0x9E, pdu[p].toInt() and 0xFF) // image/jpeg
+            assertEquals(img.size, dl)
+            p += hl
+            assertArrayEquals(img, pdu.copyOfRange(p, p + dl))
+            p += dl
+        }
+        val hl = uv(); val dl = uv()
+        p += hl
+        assertArrayEquals(text.toByteArray(Charsets.UTF_8), pdu.copyOfRange(p, p + dl))
+        assertEquals(pdu.size, p + dl)
+    }
 }

@@ -26,8 +26,16 @@ object SmsSender {
             SmsManager.getDefault()
         }
 
-    /** 길이에 따라 단문 또는 장문으로 보낸다. 반환값: 사용한 방식(SMS/LMS) */
-    fun send(context: Context, logId: Long, number: String, text: String, subject: String? = null): String {
+    /** 사진이 있으면 사진문자(MMS), 없으면 길이에 따라 단문/장문. 반환값: 사용한 방식(SMS/LMS/MMS) */
+    fun send(
+        context: Context, logId: Long, number: String, text: String, subject: String? = null,
+        withPhotos: Boolean = true,
+    ): String {
+        val photos = if (withPhotos) Attachments.list(context).map { it.readBytes() } else emptyList()
+        if (photos.isNotEmpty()) {
+            sendLms(context, logId, number, text, subject, photos, kind = "MMS")
+            return "MMS"
+        }
         return if (Phone.smsBytes(text) <= Phone.SMS_MAX_BYTES) {
             sendSms(context, logId, number, text)
             "SMS"
@@ -49,13 +57,16 @@ object SmsSender {
         }
     }
 
-    fun sendLms(context: Context, logId: Long, number: String, text: String, subject: String? = null) {
+    fun sendLms(
+        context: Context, logId: Long, number: String, text: String, subject: String? = null,
+        images: List<ByteArray> = emptyList(), kind: String = "LMS",
+    ) {
         val dir = File(context.cacheDir, "mms").apply { mkdirs() }
         val file = File(dir, "send_$logId.pdu")
-        file.writeBytes(MmsPdu.buildSendReq(number, text, subject))
+        file.writeBytes(MmsPdu.buildSendReq(number, text, subject, images))
         val uri = FileProvider.getUriForFile(context, context.packageName + ".mmsfiles", file)
         smsManager(context).sendMultimediaMessage(
-            context, uri, null, null, sentIntent(context, logId, "LMS", 0, 1)
+            context, uri, null, null, sentIntent(context, logId, kind, 0, 1)
         )
     }
 
@@ -68,7 +79,7 @@ object SmsSender {
         val req = ((logId * 16 + part) % Int.MAX_VALUE).toInt()
         // 장문은 시스템이 결과(HTTP 상태 등)를 덧붙여 주므로 수정 가능(MUTABLE)으로 만든다.
         val mutability =
-            if (kind == "LMS" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE
+            if ((kind == "LMS" || kind == "MMS") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE
             else PendingIntent.FLAG_IMMUTABLE
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or mutability
         return PendingIntent.getBroadcast(context, req, i, flags)
@@ -76,7 +87,7 @@ object SmsSender {
 
     fun describeResult(kind: String, code: Int): String {
         if (code == Activity.RESULT_OK) return "성공"
-        if (kind == "LMS") {
+        if (kind == "LMS" || kind == "MMS") {
             return when (code) {
                 SmsManager.MMS_ERROR_UNSPECIFIED -> "장문 실패: 알 수 없는 오류(1)"
                 SmsManager.MMS_ERROR_INVALID_APN -> "장문 실패: 통신사 MMS 설정(APN) 문제(2)"

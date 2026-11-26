@@ -123,7 +123,8 @@ class MainActivity : AppCompatActivity() {
         }
         val text = settings.message
         val bytes = Phone.smsBytes(text)
-        val kind = if (bytes <= Phone.SMS_MAX_BYTES) "단문" else "장문(LMS)"
+        val photos = Attachments.list(this).size
+        val kind = if (photos > 0) "사진 ${photos}장 + 글자" else if (bytes <= Phone.SMS_MAX_BYTES) "단문" else "장문(LMS)"
         MaterialAlertDialogBuilder(this)
             .setTitle("테스트 발송")
             .setMessage("지금 설정된 문자($kind, ${bytes}바이트)를 이 번호로 바로 보냅니다. 발송 규칙은 검사하지 않습니다.")

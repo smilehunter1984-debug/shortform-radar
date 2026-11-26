@@ -2,6 +2,9 @@ package com.comma.callback
 
 import android.os.Bundle
 import android.text.InputType
+import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
@@ -30,8 +33,45 @@ class SettingsActivity : AppCompatActivity() {
 
     class Fragment : PreferenceFragmentCompat() {
 
+        private val picker = registerForActivityResult(
+            ActivityResultContracts.PickMultipleVisualMedia(Attachments.MAX)
+        ) { uris ->
+            if (uris.isEmpty()) return@registerForActivityResult
+            val ctx = requireContext().applicationContext
+            Toast.makeText(ctx, "사진을 문자용 크기로 줄이는 중…", Toast.LENGTH_SHORT).show()
+            Thread {
+                val n = Attachments.save(ctx, uris)
+                activity?.runOnUiThread {
+                    updatePhotoSummary()
+                    Toast.makeText(ctx, "사진 ${n}장 저장됨", Toast.LENGTH_SHORT).show()
+                }
+            }.start()
+        }
+
+        private fun updatePhotoSummary() {
+            val ctx = context ?: return
+            val files = Attachments.list(ctx)
+            findPreference<Preference>("pick_photos")?.summary =
+                if (files.isEmpty()) "지금은 사진 없음 (글자만 보냄)"
+                else "사진 ${files.size}장 첨부됨 · 총 ${Attachments.totalBytes(ctx) / 1024}KB\n" +
+                    "사진문자는 모바일 데이터가 켜져 있어야 나갑니다. 실패하면 글자만 다시 보냅니다."
+            findPreference<Preference>("clear_photos")?.isVisible = files.isNotEmpty()
+        }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences, rootKey)
+
+            findPreference<Preference>("pick_photos")?.setOnPreferenceClickListener {
+                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                true
+            }
+            findPreference<Preference>("clear_photos")?.setOnPreferenceClickListener {
+                Attachments.clear(requireContext())
+                updatePhotoSummary()
+                Toast.makeText(requireContext(), "첨부 사진을 뺐습니다", Toast.LENGTH_SHORT).show()
+                true
+            }
+            updatePhotoSummary()
 
             findPreference<EditTextPreference>("message")?.apply {
                 setOnBindEditTextListener {

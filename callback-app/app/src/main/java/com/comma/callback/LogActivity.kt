@@ -63,6 +63,7 @@ class LogActivity : AppCompatActivity() {
             val kind = when (e.kind) {
                 "SMS" -> " · 단문"
                 "LMS" -> " · 장문"
+                "MMS" -> " · 사진"
                 "SPLIT" -> " · 나눠 보냄"
                 else -> ""
             }

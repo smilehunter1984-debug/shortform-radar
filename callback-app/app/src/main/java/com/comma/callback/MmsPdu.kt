@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream
  */
 object MmsPdu {
 
-    fun buildSendReq(to: String, text: String, subject: String? = null): ByteArray {
+    fun buildSendReq(to: String, text: String, subject: String? = null, images: List<ByteArray> = emptyList()): ByteArray {
         val out = ByteArrayOutputStream()
 
         // X-Mms-Message-Type: m-send-req
@@ -36,8 +36,20 @@ object MmsPdu {
         // Content-Type: application/vnd.wap.multipart.mixed (반드시 마지막 헤더)
         out.write(0x84); out.write(0xA3)
 
-        // ----- 본문(파트 목록) -----
-        writeUintVar(out, 1)
+        // ----- 본문(파트 목록): 사진들 + 글자 -----
+        writeUintVar(out, images.size + 1)
+
+        for ((i, img) in images.withIndex()) {
+            val h = ByteArrayOutputStream().apply {
+                write(0x9E) // Content-Type: image/jpeg
+                write(0x8E); writeText(this, "image_${i + 1}.jpg")
+                write(0xC0); writeText(this, "<image_${i + 1}>")
+            }.toByteArray()
+            writeUintVar(out, h.size)
+            writeUintVar(out, img.size)
+            out.write(h)
+            out.write(img)
+        }
 
         val data = text.toByteArray(Charsets.UTF_8)
         val headers = ByteArrayOutputStream().apply {

@@ -31,20 +31,36 @@ class SentReceiver : BroadcastReceiver() {
         val db = LogDb.get(ctx)
         val entry = db.find(logId) ?: return
 
-        if (kind == "LMS") {
+        if (kind == "LMS" || kind == "MMS") {
             File(File(ctx.cacheDir, "mms"), "send_$logId.pdu").delete()
         }
 
         if (code == Activity.RESULT_OK) {
             // 나눠 보낸 문자는 마지막 조각까지 성공해야 성공으로 기록
             if (part == parts - 1 && entry.status != LogDb.FAILED) {
-                val note = if (entry.reason.startsWith("장문 실패")) entry.reason + " → 나눠 보내기 성공" else ""
+                val note = when {
+                    entry.reason.startsWith("장문 실패") -> entry.reason + " → 나눠 보내기 성공"
+                    entry.reason.startsWith("사진 실패") -> entry.reason.replace("재발송", "재발송 성공")
+                    else -> ""
+                }
                 db.update(logId, LogDb.SENT, reason = note)
             }
             return
         }
 
         val why = SmsSender.describeResult(kind, code)
+        if (kind == "MMS") {
+            // 사진문자 실패 → 사진 없이 글자만 다시 보내기
+            val s = Settings(ctx)
+            val note = "사진 " + why.removePrefix("장문 ")
+            try {
+                val k = SmsSender.send(ctx, logId, entry.number, entry.message, s.lmsSubject, withPhotos = false)
+                db.update(logId, LogDb.PENDING, reason = "$note → 글자만 재발송", kind = k)
+            } catch (e: Exception) {
+                db.update(logId, LogDb.FAILED, reason = "$note / 재발송 오류: ${e.message}")
+            }
+            return
+        }
         if (kind == "LMS" && Settings(ctx).lmsFallback) {
             // 장문 실패 → 짧은 문자 여러 개로 다시 보내기
             db.update(logId, LogDb.PENDING, reason = why, kind = "SPLIT")
